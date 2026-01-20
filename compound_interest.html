@@ -1,0 +1,3275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>投资收益计算器（月/交易日精确）</title>
+
+    <style>
+      :root {
+        --bg0: #070a14;
+        --bg1: #0b1020;
+        --border: rgba(255, 255, 255, 0.12);
+        --border2: rgba(255, 255, 255, 0.16);
+        --text: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.66);
+        --muted2: rgba(255, 255, 255, 0.55);
+        --good: rgba(121, 255, 180, 0.92);
+        --bad: rgba(255, 128, 128, 0.92);
+        --warn: rgba(255, 210, 120, 0.92);
+        --focus: rgba(160, 190, 255, 0.7);
+        --shadow: 0 16px 50px rgba(0, 0, 0, 0.35);
+        --radius: 18px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        padding: 24px;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica,
+          Arial, 'PingFang SC', 'Microsoft YaHei';
+        color: var(--text);
+        background: radial-gradient(
+            1000px 520px at 18% 12%,
+            rgba(88, 130, 255, 0.26),
+            transparent 60%
+          ),
+          radial-gradient(
+            900px 520px at 82% 30%,
+            rgba(255, 120, 200, 0.18),
+            transparent 55%
+          ),
+          radial-gradient(
+            900px 560px at 55% 92%,
+            rgba(120, 255, 210, 0.08),
+            transparent 55%
+          ),
+          linear-gradient(180deg, var(--bg0), var(--bg1));
+      }
+
+      .wrap {
+        max-width: 1100px;
+        margin: 0 auto;
+        display: grid;
+        gap: 16px;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 16px 18px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.09),
+          rgba(255, 255, 255, 0.06)
+        );
+        backdrop-filter: blur(14px);
+        box-shadow: var(--shadow);
+      }
+      .topbar h1 {
+        margin: 0;
+        font-size: 20px;
+        letter-spacing: 0.2px;
+      }
+      .topbar .sub {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .topbar .now {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          'Liberation Mono', 'Courier New', monospace;
+        color: var(--muted);
+        font-size: 13px;
+        white-space: nowrap;
+        padding-top: 4px;
+      }
+
+      /* ===== language toggle ===== */
+      .langbtn {
+        width: auto;
+        padding: 8px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        line-height: 1;
+        white-space: nowrap;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1.12fr 0.88fr;
+        gap: 16px;
+      }
+      @media (max-width: 920px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .card {
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.085),
+          rgba(255, 255, 255, 0.055)
+        );
+        backdrop-filter: blur(14px);
+        box-shadow: var(--shadow);
+        padding: 16px;
+      }
+
+      .section-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 8px 10px;
+        border: 1px dashed rgba(255, 255, 255, 0.16);
+        border-radius: 14px;
+        background: rgba(0, 0, 0, 0.14);
+        margin: 6px 0 12px;
+      }
+      .section-title span {
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .pill {
+        font-size: 12px;
+        color: var(--muted);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.06);
+        padding: 4px 8px;
+        border-radius: 999px;
+      }
+
+      .form {
+        display: grid;
+        gap: 12px;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 160px 1fr;
+        gap: 12px;
+        align-items: center;
+      }
+      @media (max-width: 520px) {
+        .row {
+          grid-template-columns: 132px 1fr;
+        }
+      }
+
+      .row label {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.2;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      input,
+      select,
+      button,
+      textarea {
+        width: 100%;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--text);
+        padding: 10px 12px;
+        outline: none;
+        transition: border-color 0.15s ease, background 0.15s ease,
+          transform 0.05s ease;
+      }
+      input:focus,
+      select:focus,
+      textarea:focus {
+        border-color: var(--focus);
+        background: rgba(255, 255, 255, 0.075);
+      }
+      input[type='number'] {
+        font-variant-numeric: tabular-nums;
+      }
+
+      .inline {
+        display: grid;
+        grid-template-columns: minmax(160px, 1fr) 160px;
+        gap: 10px;
+      }
+      @media (max-width: 520px) {
+        .inline {
+          grid-template-columns: minmax(140px, 1fr) 140px;
+        }
+      }
+      #duration {
+        min-width: 140px;
+      }
+      .inline > input {
+        min-width: 140px;
+      }
+
+      .toggle {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .toggle input {
+        width: auto;
+      }
+
+      .actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 6px;
+      }
+      button {
+        cursor: pointer;
+        border: 1px solid var(--border2);
+        background: rgba(255, 255, 255, 0.09);
+      }
+      button:hover {
+        background: rgba(255, 255, 255, 0.13);
+      }
+      button:active {
+        transform: translateY(1px);
+      }
+
+      details {
+        margin-top: 12px;
+      }
+      summary {
+        cursor: pointer;
+        color: var(--muted);
+        font-size: 13px;
+        user-select: none;
+      }
+
+      .table-scroll {
+        margin-top: 10px;
+        max-height: 360px;
+        overflow: auto;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(0, 0, 0, 0.1);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        padding: 10px 10px;
+        text-align: right;
+        font-size: 13px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        white-space: nowrap;
+      }
+      th:first-child,
+      td:first-child {
+        text-align: center;
+      }
+      th {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        color: var(--muted);
+        font-weight: 650;
+        background: rgba(0, 0, 0, 0.35);
+        backdrop-filter: blur(8px);
+      }
+      tr:last-child td {
+        border-bottom: none;
+      }
+
+      .result {
+        display: grid;
+        gap: 12px;
+      }
+      .kpi {
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 16px;
+        background: rgba(0, 0, 0, 0.18);
+        padding: 12px 12px;
+      }
+      .kpi .name {
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .kpi .val {
+        margin-top: 6px;
+        font-size: 20px;
+        font-weight: 750;
+        letter-spacing: 0.2px;
+      }
+      .kpi .hint {
+        margin-top: 4px;
+        color: var(--muted2);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+      .good {
+        color: var(--good);
+      }
+      .bad {
+        color: var(--bad);
+      }
+      .warn {
+        color: var(--warn);
+      }
+
+      .foot {
+        color: var(--muted2);
+        font-size: 12px;
+        line-height: 1.6;
+      }
+      .split-note {
+        margin-top: 8px;
+        padding-top: 10px;
+        border-top: 1px dashed rgba(255, 255, 255, 0.14);
+      }
+      .mini {
+        font-size: 12px;
+        color: var(--muted2);
+      }
+      .mono {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+          'Liberation Mono', 'Courier New', monospace;
+      }
+
+      /* Tooltip desktop (hover) + pinned */
+      .qmark {
+        position: relative;
+        display: inline-grid;
+        place-items: center;
+        width: 18px;
+        height: 18px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        background: rgba(255, 255, 255, 0.06);
+        color: rgba(255, 255, 255, 0.78);
+        font-size: 12px;
+        line-height: 1;
+        cursor: help;
+        user-select: none;
+        flex: 0 0 auto;
+      }
+      .qmark:focus {
+        outline: none;
+        border-color: var(--focus);
+      }
+      .qmark::before {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 100%;
+        transform: translateX(-50%);
+        border: 7px solid transparent;
+        border-top: 0;
+        border-bottom-color: rgba(0, 0, 0, 0.78);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.12s ease;
+        z-index: 60;
+      }
+      .qmark::after {
+        content: attr(data-tip);
+        position: absolute;
+        left: 50%;
+        top: calc(100% + 10px);
+        transform: translateX(-50%) translateY(-2px);
+        width: min(360px, 72vw);
+        padding: 10px 12px;
+        border-radius: 14px;
+        background: rgba(0, 0, 0, 0.78);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        color: rgba(255, 255, 255, 0.86);
+        font-size: 12px;
+        line-height: 1.55;
+        box-shadow: 0 18px 48px rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(10px);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.12s ease, transform 0.12s ease;
+        white-space: normal;
+        z-index: 61;
+      }
+      .qmark:hover::before,
+      .qmark:hover::after {
+        opacity: 1;
+      }
+      .qmark:hover::after {
+        transform: translateX(-50%) translateY(0);
+      }
+      .qmark.pinned {
+        border-color: rgba(160, 190, 255, 0.55);
+        background: rgba(160, 190, 255, 0.1);
+        cursor: pointer;
+      }
+      .qmark.pinned::before,
+      .qmark.pinned::after {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .qmark.pinned::after {
+        transform: translateX(-50%) translateY(0);
+      }
+
+      /* Mobile bottom sheet tooltip */
+      .tip-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.52);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.18s ease;
+        z-index: 2000;
+      }
+      .tip-overlay.open {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .tip-sheet {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        transform: translateY(105%);
+        transition: transform 0.22s ease;
+        z-index: 2001;
+        padding: 12px 12px calc(12px + env(safe-area-inset-bottom));
+      }
+      .tip-sheet.open {
+        transform: translateY(0);
+      }
+      .tip-card {
+        max-width: 920px;
+        margin: 0 auto;
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        background: rgba(0, 0, 0, 0.78);
+        backdrop-filter: blur(12px);
+        box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
+        padding: 12px 12px;
+      }
+      .tip-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 8px;
+      }
+      .tip-title {
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.86);
+        font-weight: 700;
+      }
+      .tip-close {
+        width: 32px;
+        height: 32px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        background: rgba(255, 255, 255, 0.06);
+        color: rgba(255, 255, 255, 0.82);
+        cursor: pointer;
+      }
+      .tip-body {
+        font-size: 12px;
+        line-height: 1.6;
+        color: rgba(255, 255, 255, 0.82);
+        white-space: pre-wrap;
+      }
+
+      .statusline {
+        margin-top: -6px;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.56);
+        padding-left: 2px;
+      }
+      .fileline {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+      .fileline input[type='file'] {
+        padding: 10px 12px;
+      }
+      .soft {
+        border: 1px dashed rgba(255, 255, 255, 0.14);
+        background: rgba(0, 0, 0, 0.12);
+        border-radius: 14px;
+        padding: 10px 12px;
+        color: rgba(255, 255, 255, 0.62);
+        font-size: 12px;
+        line-height: 1.6;
+      }
+
+      .banner {
+        display: none;
+        border: 1px solid rgba(255, 210, 120, 0.28);
+        background: rgba(255, 210, 120, 0.08);
+        color: rgba(255, 230, 170, 0.92);
+        border-radius: 14px;
+        padding: 10px 12px;
+        font-size: 12px;
+        line-height: 1.55;
+        margin-top: 6px;
+      }
+      .banner.show {
+        display: block;
+      }
+      .banner .mono {
+        color: rgba(255, 230, 170, 0.92);
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="wrap">
+      <div class="topbar">
+        <div>
+          <h1 id="pageTitle" data-i18n="pageTitle">投资收益计算器（月/交易日精确）</h1>
+          <div class="sub" id="pageSub" data-i18n="pageSub">
+            ✅ A股/美股可切换｜✅ 必须导入交易日历 JSON 才能“精确计算”交易日收益
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; align-items: center">
+          <button id="langBtn" type="button" class="langbtn">EN</button>
+          <div class="now" id="now"></div>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <div class="section-title">
+            <span data-i18n="secParams">参数设置</span>
+            <span class="pill" data-i18n="pillInputUpdate">输入即更新</span>
+          </div>
+
+          <div class="form">
+            <div class="row">
+              <label><span data-i18n="lblSimMode">模拟方式</span></label>
+              <select id="simMode">
+                <option value="monthly" selected data-i18n="optSimMonthly">
+                  按月（输入月收益率）
+                </option>
+                <option value="tradingDays" data-i18n="optSimTradingDays">
+                  按交易日（精确：A股/美股）
+                </option>
+              </select>
+            </div>
+            <div class="help" data-i18n="helpSimMode">
+              说明 按月：每月结算一次收益；按交易日：仅在“交易日历”中的日期滚动收益，严格剔除节假日/休市日（必须导入交易日历
+              JSON）。
+            </div>
+
+            <div id="tradingBox" style="display: none">
+              <div class="row">
+                <label><span data-i18n="lblMarket">市场</span></label>
+                <select id="market">
+                  <option value="CN" selected data-i18n="optMarketCN">A股</option>
+                  <option value="US" data-i18n="optMarketUS">美股</option>
+                </select>
+              </div>
+              <div class="help" data-i18n="helpMarket">
+                说明 手动切换 A股/美股。每个市场可导入各自交易日历（支持一次导入两套）。
+              </div>
+
+              <div class="row">
+                <label><span data-i18n="lblStartDate">开始日期</span></label>
+                <input id="startDate" type="date" />
+              </div>
+              <div class="help" data-i18n="helpStartDate">
+                说明 交易日模拟从该日期开始（含），到“开始日期 + 投资时长（月/年）”结束（不含结束日）。收益只在交易日滚动。
+              </div>
+
+              <div class="row">
+                <label><span data-i18n="lblRateMode">收益率输入</span></label>
+                <select id="rateMode">
+                  <option value="daily" selected data-i18n="optRateDaily">
+                    日收益率（%/交易日）
+                  </option>
+                  <option value="annual" data-i18n="optRateAnnual">
+                    年化收益率（%）
+                  </option>
+                </select>
+              </div>
+              <div class="help" data-i18n="helpRateMode">
+                说明 日收益率：每个交易日固定收益率；年化：按“每个自然年交易日数”精确折算到交易日（不同年份交易日数不同，会导致每年的日收益率不同）。
+              </div>
+
+              <div class="row" id="dailyRateRow">
+                <label><span data-i18n="lblDailyRate">日收益率（%）</span></label>
+                <input id="dailyRate" type="number" step="0.0001" value="0.1" />
+              </div>
+              <div class="help" id="dailyRateHelp" data-i18n="helpDailyRate">
+                说明 例如 0.1 表示每个交易日 +0.1%（复投则按当日余额滚动）。
+              </div>
+
+              <div class="row" id="annualRateRow" style="display: none">
+                <label><span data-i18n="lblAnnualRate">年化收益率（%）</span></label>
+                <input id="annualRate" type="number" step="0.01" value="15" />
+              </div>
+              <div class="help" id="annualRateHelp" style="display: none" data-i18n="helpAnnualRate">
+                说明 精确折算：对每一天，取该自然年的交易日总数 N，日收益率
+                r_day=(1+年化)^(1/N)-1，确保“该年交易日全部滚动后≈年化”。
+              </div>
+
+              <div class="row">
+                <label><span data-i18n="lblCalendar">交易日历 JSON</span></label>
+                <div class="fileline">
+                  <input
+                    id="calendarFile"
+                    type="file"
+                    accept=".json,application/json"
+                  />
+                  <div class="soft">
+                    <div><b data-i18n="calFmtTitle">支持格式（日期必须为 YYYY-MM-DD）：</b></div>
+                    <div>
+                      <span data-i18n="calFmt1Prefix">1)</span>
+                      <span class="mono">["2026-01-02","2026-01-03",...]</span>
+                      <span data-i18n="calFmt1Suffix">（导入到当前选择的市场）</span>
+                    </div>
+                    <div>
+                      <span data-i18n="calFmt2Prefix">2)</span>
+                      <span class="mono">{"CN":[...], "US":[...]}</span>
+                      <span data-i18n="calFmt2Mid">或</span>
+                      <span class="mono">{"A股":[...], "美股":[...]}</span>
+                    </div>
+                    <div class="mini" style="margin-top: 6px" data-i18n="calSuggest">
+                      建议：导入覆盖你模拟区间的完整日历（跨年需包含所有年份）。
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="help" data-i18n="helpCalendar">
+                说明 为保证“精确统计”，交易日模式下<strong>未导入或日历覆盖不足将直接停止计算并提示缺失范围</strong>（不再用周一~周五近似）。
+              </div>
+
+              <div class="statusline" id="calendarStatus" data-i18n="calStatusNotImported">
+                未导入交易日历：交易日精确模式将无法计算
+              </div>
+              <div class="banner" id="calendarBanner"></div>
+            </div>
+
+            <div class="row">
+              <label><span data-i18n="lblPrincipal">本金（元）</span></label>
+              <input
+                id="principal"
+                type="number"
+                min="0"
+                step="100"
+                value="300000"
+              />
+            </div>
+            <div class="help" data-i18n="helpPrincipal">说明 初始投入金额。</div>
+
+            <div class="row" id="monthlyRateRow">
+              <label><span data-i18n="lblMonthlyRate">月收益率（%）</span></label>
+              <input id="monthlyRate" type="number" step="0.01" value="2" />
+            </div>
+            <div class="help" id="monthlyRateHelp" data-i18n="helpMonthlyRate">
+              说明 每月收益率，例如 2 表示每月 +2%。
+            </div>
+
+            <div class="row">
+              <label><span data-i18n="lblDuration">投资时长</span></label>
+              <div class="inline">
+                <input
+                  id="duration"
+                  type="number"
+                  min="0"
+                  step="1"
+                  value="12"
+                />
+                <select id="durationUnit">
+                  <option value="months" selected data-i18n="optUnitMonths">月</option>
+                  <option value="years" data-i18n="optUnitYears">年</option>
+                </select>
+              </div>
+            </div>
+            <div class="help" data-i18n="helpDuration">
+              说明 输入年会自动折算为月数（例如 30 年=360
+              个月）。交易日模拟会用该月数生成结束日期。
+            </div>
+
+            <div class="row">
+              <label><span data-i18n="lblCalcMode">计算方式</span></label>
+              <select id="mode">
+                <option value="compound" selected data-i18n="optCompound">复投（复利）</option>
+                <option value="simple" data-i18n="optSimple">不复投（单利）</option>
+              </select>
+            </div>
+            <div class="help" data-i18n="helpCalcMode">
+              说明 复投：收益计入本金继续滚动；不复投：收益按初始本金计算。
+            </div>
+
+            <div class="row">
+              <label><span data-i18n="lblShowAnnual">显示年化</span></label>
+              <div class="toggle">
+                <input id="showAnnualized" type="checkbox" checked />
+                <span data-i18n="txtShowAnnual">显示年化收益率（折算）</span>
+              </div>
+            </div>
+            <div class="help" data-i18n="helpShowAnnual">
+              说明 按月：年化=(期末/本金)^(12/月数)-1；按交易日：年化=(期末/本金)^(1/年数)-1（年数=实际日历天/365.25）。
+            </div>
+
+            <div class="section-title" style="margin-top: 12px">
+              <span data-i18n="secDD">回撤控制</span>
+              <span class="pill" data-i18n="pillDD">单次 / 多次 / 随机</span>
+            </div>
+
+            <div class="row">
+              <label><span data-i18n="lblEnableDD">启用回撤</span></label>
+              <div class="toggle">
+                <input id="ddEnabled" type="checkbox" checked />
+                <span data-i18n="txtEnableDD">开启回撤控制与统计</span>
+              </div>
+            </div>
+            <div class="help" data-i18n="helpEnableDD">
+              说明 回撤：账户从历史峰值一次性回落 X%（一次性），之后继续运行。
+            </div>
+
+            <div id="ddConfig">
+              <div class="row">
+                <label><span data-i18n="lblDDMode">回撤模式</span></label>
+                <select id="ddMode">
+                  <option value="single" selected data-i18n="optDDSingle">
+                    单次回撤（对比不同回撤幅度）
+                  </option>
+                  <option value="multi" data-i18n="optDDMulti">多次回撤（手动序列）</option>
+                  <option value="random" data-i18n="optDDRandom">
+                    随机回撤序列（蒙特卡洛）
+                  </option>
+                </select>
+              </div>
+              <div class="help" data-i18n="helpDDMode">
+                说明 单次：对不同回撤幅度分别计算；多次：按序列发生多次回撤；随机：按概率/次数生成序列并输出分位数（P50
+                / P90最差）。
+              </div>
+
+              <div id="singleBox">
+                <div class="row">
+                  <label><span data-i18n="lblDDList">回撤列表（%）</span></label>
+                  <input id="ddList" type="text" value="5,10,20,30" />
+                </div>
+                <div class="help" data-i18n="helpDDList">
+                  说明 逗号分隔，如 5,10,15,20；逐个计算净收益/期末余额/回撤前峰值 Peak。
+                </div>
+
+                <div class="row">
+                  <label><span data-i18n="lblDDWhen">回撤发生</span></label>
+                  <select id="ddStrategy">
+                    <option value="worst" selected data-i18n="optDDWorst">
+                      最差情况（任意月份发生一次）
+                    </option>
+                    <option value="fixed" data-i18n="optDDFixed">指定月份发生一次</option>
+                  </select>
+                </div>
+                <div class="help" data-i18n="helpDDWhen">
+                  说明 最差：枚举 1..月数取最差期末；指定：仅在某个月（按“月序号”）触发一次回撤。
+                </div>
+
+                <div class="row" id="ddMonthRow" style="display: none">
+                  <label><span data-i18n="lblDDMonth">指定月份</span></label>
+                  <input
+                    id="ddMonth"
+                    type="number"
+                    min="1"
+                    step="1"
+                    value="6"
+                  />
+                </div>
+                <div class="help" id="ddMonthHelp" style="display: none" data-i18n="helpDDMonth">
+                  说明 例如 6 表示第 6 个月结束后触发回撤（交易日模式同样按“月序号”）。
+                </div>
+              </div>
+
+              <div id="multiBox" style="display: none">
+                <div class="row">
+                  <label><span data-i18n="lblDDSeq">回撤序列</span></label>
+                  <input id="ddSeq" type="text" value="10@6, 20@18" />
+                </div>
+                <div class="help" data-i18n="helpDDSeq">
+                  说明 格式：回撤%@月份（按月序号），逗号分隔；如 10@6,20@18。可同月多个事件，按输入顺序执行。
+                </div>
+              </div>
+
+              <div id="randomBox" style="display: none">
+                <div class="row">
+                  <label><span data-i18n="lblDDPool">回撤幅度池（%）</span></label>
+                  <input id="ddPool" type="text" value="5,10,20,30" />
+                </div>
+                <div class="help" data-i18n="helpDDPool">
+                  说明 随机回撤幅度从该列表等概率抽取（重复某个数字可“加权”）。
+                </div>
+
+                <div class="row">
+                  <label><span data-i18n="lblRandMethod">随机方式</span></label>
+                  <select id="randMethod">
+                    <option value="prob" selected data-i18n="optRandProb">按月概率</option>
+                    <option value="count" data-i18n="optRandCount">固定次数</option>
+                  </select>
+                </div>
+                <div class="help" data-i18n="helpRandMethod">
+                  说明 随机回撤仍以“月”为粒度：按月概率或在周期内随机挑 N 个月发生。
+                </div>
+
+                <div class="row" id="randProbRow">
+                  <label><span data-i18n="lblRandProb">月回撤概率（%）</span></label>
+                  <input
+                    id="randProb"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    value="2"
+                  />
+                </div>
+                <div class="help" id="randProbHelp" data-i18n="helpRandProb">
+                  说明 例如 2 表示每个月有 2% 概率触发一次随机回撤。
+                </div>
+
+                <div class="row" id="randCountRow" style="display: none">
+                  <label><span data-i18n="lblRandCount">回撤次数（次）</span></label>
+                  <input
+                    id="randCount"
+                    type="number"
+                    min="0"
+                    step="1"
+                    value="6"
+                  />
+                </div>
+                <div class="help" id="randCountHelp" style="display: none" data-i18n="helpRandCount">
+                  说明 例如 6 表示整个周期随机选 6 个月触发回撤。
+                </div>
+
+                <div class="row">
+                  <label><span data-i18n="lblSimRuns">模拟次数</span></label>
+                  <input
+                    id="simRuns"
+                    type="number"
+                    min="100"
+                    step="100"
+                    value="2000"
+                  />
+                </div>
+                <div class="help" data-i18n="helpSimRuns">
+                  说明 模拟次数越高分位数越稳定；建议 1000~10000。
+                </div>
+
+                <div class="row">
+                  <label><span data-i18n="lblSimSeed">随机种子</span></label>
+                  <input id="simSeed" type="text" value="auto" />
+                </div>
+                <div class="help" data-i18n="helpSimSeed">
+                  说明 auto 表示每次不同；填写固定字符串可复现实验结果。
+                </div>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button id="resetBtn" type="button" data-i18n="btnReset">重置为示例</button>
+              <button id="copyBtn" type="button" data-i18n="btnCopy">复制结果</button>
+            </div>
+          </div>
+
+          <details id="details">
+            <summary data-i18n="detailsSummary">展开查看每月明细（余额、当月收益、累计收益）</summary>
+            <div class="table-scroll" id="tableWrap"></div>
+            <div class="mini split-note" data-i18n="detailsHint">
+              提示：明细区已启用滚动条。交易日模式按“月汇总”展示，避免表格过长。
+            </div>
+          </details>
+        </div>
+
+        <div class="card">
+          <div class="section-title">
+            <span data-i18n="secResult">结果</span>
+            <span class="pill" data-i18n="pillRealtime">实时更新</span>
+          </div>
+
+          <div class="result">
+            <div class="kpi">
+              <div class="name" data-i18n="kpiFinal">周期末总金额</div>
+              <div class="val" id="finalAmount">-</div>
+              <div class="hint" data-i18n="kpiFinalHint">= 本金 + 累计收益</div>
+            </div>
+
+            <div class="kpi">
+              <div class="name" data-i18n="kpiProfit">净收益</div>
+              <div class="val" id="profit">-</div>
+              <div class="hint" data-i18n="kpiProfitHint">不含任何手续费/税费</div>
+            </div>
+
+            <div class="kpi">
+              <div class="name" data-i18n="kpiTotalReturn">累计收益率</div>
+              <div class="val" id="totalReturn">-</div>
+              <div class="hint" data-i18n="kpiTotalReturnHint">（净收益 ÷ 本金）</div>
+            </div>
+
+            <div class="kpi" id="annualizedBox" style="display: none">
+              <div class="name" data-i18n="kpiAnnualized">年化收益率（折算）</div>
+              <div class="val" id="annualized">-</div>
+              <div class="hint" id="annualizedHint">-</div>
+            </div>
+
+            <div class="kpi" id="ddBox" style="display: none">
+              <div class="name" id="ddBoxTitle" data-i18n="ddBoxTitleDefault">回撤控制下的收益</div>
+              <div class="hint" id="ddBoxHint">-</div>
+              <div id="ddOut"></div>
+            </div>
+
+            <div class="foot">
+              <div data-i18n="footTitle">说明：</div>
+              <div data-i18n="footLine1">
+                • “交易日精确模式”只在交易日滚动收益，且需要交易日历覆盖整个模拟区间。
+              </div>
+              <div data-i18n="footLine2">• 该页面仅用于数学计算演示，不构成投资建议。</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile tooltip bottom sheet -->
+    <div class="tip-overlay" id="tipOverlay" aria-hidden="true"></div>
+    <div class="tip-sheet" id="tipSheet" aria-hidden="true">
+      <div class="tip-card" role="dialog" aria-modal="true" aria-label="说明">
+        <div class="tip-head">
+          <div class="tip-title" id="tipTitle" data-i18n="tipTitle">说明</div>
+          <button class="tip-close" id="tipClose" type="button">×</button>
+        </div>
+        <div class="tip-body" id="tipBody"></div>
+      </div>
+    </div>
+
+    <script>
+      /* =========================
+         i18n: zh <-> en (button toggle)
+         - All visible static texts are keyed via data-i18n
+         - Tooltips are generated from .help and removed; we keep keys on .qmark for later toggles
+         - Dynamic strings in JS are also localized via t()
+      ========================= */
+      const I18N = {
+        lang: 'zh',
+        dict: {
+          zh: {
+            pageTitle: '投资收益计算器（月/交易日精确）',
+            pageSub:
+              '✅ A股/美股可切换｜✅ 必须导入交易日历 JSON 才能“精确计算”交易日收益',
+
+            secParams: '参数设置',
+            pillInputUpdate: '输入即更新',
+            lblSimMode: '模拟方式',
+            optSimMonthly: '按月（输入月收益率）',
+            optSimTradingDays: '按交易日（精确：A股/美股）',
+            helpSimMode:
+              '说明 按月：每月结算一次收益；按交易日：仅在“交易日历”中的日期滚动收益，严格剔除节假日/休市日（必须导入交易日历 JSON）。',
+
+            lblMarket: '市场',
+            optMarketCN: 'A股',
+            optMarketUS: '美股',
+            helpMarket:
+              '说明 手动切换 A股/美股。每个市场可导入各自交易日历（支持一次导入两套）。',
+
+            lblStartDate: '开始日期',
+            helpStartDate:
+              '说明 交易日模拟从该日期开始（含），到“开始日期 + 投资时长（月/年）”结束（不含结束日）。收益只在交易日滚动。',
+
+            lblRateMode: '收益率输入',
+            optRateDaily: '日收益率（%/交易日）',
+            optRateAnnual: '年化收益率（%）',
+            helpRateMode:
+              '说明 日收益率：每个交易日固定收益率；年化：按“每个自然年交易日数”精确折算到交易日（不同年份交易日数不同，会导致每年的日收益率不同）。',
+
+            lblDailyRate: '日收益率（%）',
+            helpDailyRate:
+              '说明 例如 0.1 表示每个交易日 +0.1%（复投则按当日余额滚动）。',
+
+            lblAnnualRate: '年化收益率（%）',
+            helpAnnualRate:
+              '说明 精确折算：对每一天，取该自然年的交易日总数 N，日收益率 r_day=(1+年化)^(1/N)-1，确保“该年交易日全部滚动后≈年化”。',
+
+            lblCalendar: '交易日历 JSON',
+            calFmtTitle: '支持格式（日期必须为 YYYY-MM-DD）：',
+            calFmt1Prefix: '1)',
+            calFmt1Suffix: '（导入到当前选择的市场）',
+            calFmt2Prefix: '2)',
+            calFmt2Mid: '或',
+            calSuggest: '建议：导入覆盖你模拟区间的完整日历（跨年需包含所有年份）。',
+            helpCalendar:
+              '说明 为保证“精确统计”，交易日模式下<strong>未导入或日历覆盖不足将直接停止计算并提示缺失范围</strong>（不再用周一~周五近似）。',
+            calStatusNotImported: '未导入交易日历：交易日精确模式将无法计算',
+
+            lblPrincipal: '本金（元）',
+            helpPrincipal: '说明 初始投入金额。',
+
+            lblMonthlyRate: '月收益率（%）',
+            helpMonthlyRate: '说明 每月收益率，例如 2 表示每月 +2%。',
+
+            lblDuration: '投资时长',
+            optUnitMonths: '月',
+            optUnitYears: '年',
+            helpDuration:
+              '说明 输入年会自动折算为月数（例如 30 年=360 个月）。交易日模拟会用该月数生成结束日期。',
+
+            lblCalcMode: '计算方式',
+            optCompound: '复投（复利）',
+            optSimple: '不复投（单利）',
+            helpCalcMode:
+              '说明 复投：收益计入本金继续滚动；不复投：收益按初始本金计算。',
+
+            lblShowAnnual: '显示年化',
+            txtShowAnnual: '显示年化收益率（折算）',
+            helpShowAnnual:
+              '说明 按月：年化=(期末/本金)^(12/月数)-1；按交易日：年化=(期末/本金)^(1/年数)-1（年数=实际日历天/365.25）。',
+
+            secDD: '回撤控制',
+            pillDD: '单次 / 多次 / 随机',
+
+            lblEnableDD: '启用回撤',
+            txtEnableDD: '开启回撤控制与统计',
+            helpEnableDD:
+              '说明 回撤：账户从历史峰值一次性回落 X%（一次性），之后继续运行。',
+
+            lblDDMode: '回撤模式',
+            optDDSingle: '单次回撤（对比不同回撤幅度）',
+            optDDMulti: '多次回撤（手动序列）',
+            optDDRandom: '随机回撤序列（蒙特卡洛）',
+            helpDDMode:
+              '说明 单次：对不同回撤幅度分别计算；多次：按序列发生多次回撤；随机：按概率/次数生成序列并输出分位数（P50 / P90最差）。',
+
+            lblDDList: '回撤列表（%）',
+            helpDDList:
+              '说明 逗号分隔，如 5,10,15,20；逐个计算净收益/期末余额/回撤前峰值 Peak。',
+
+            lblDDWhen: '回撤发生',
+            optDDWorst: '最差情况（任意月份发生一次）',
+            optDDFixed: '指定月份发生一次',
+            helpDDWhen:
+              '说明 最差：枚举 1..月数取最差期末；指定：仅在某个月（按“月序号”）触发一次回撤。',
+
+            lblDDMonth: '指定月份',
+            helpDDMonth:
+              '说明 例如 6 表示第 6 个月结束后触发回撤（交易日模式同样按“月序号”）。',
+
+            lblDDSeq: '回撤序列',
+            helpDDSeq:
+              '说明 格式：回撤%@月份（按月序号），逗号分隔；如 10@6,20@18。可同月多个事件，按输入顺序执行。',
+
+            lblDDPool: '回撤幅度池（%）',
+            helpDDPool:
+              '说明 随机回撤幅度从该列表等概率抽取（重复某个数字可“加权”）。',
+
+            lblRandMethod: '随机方式',
+            optRandProb: '按月概率',
+            optRandCount: '固定次数',
+            helpRandMethod:
+              '说明 随机回撤仍以“月”为粒度：按月概率或在周期内随机挑 N 个月发生。',
+
+            lblRandProb: '月回撤概率（%）',
+            helpRandProb: '说明 例如 2 表示每个月有 2% 概率触发一次随机回撤。',
+
+            lblRandCount: '回撤次数（次）',
+            helpRandCount: '说明 例如 6 表示整个周期随机选 6 个月触发回撤。',
+
+            lblSimRuns: '模拟次数',
+            helpSimRuns: '说明 模拟次数越高分位数越稳定；建议 1000~10000。',
+
+            lblSimSeed: '随机种子',
+            helpSimSeed: '说明 auto 表示每次不同；填写固定字符串可复现实验结果。',
+
+            btnReset: '重置为示例',
+            btnCopy: '复制结果',
+
+            detailsSummary: '展开查看每月明细（余额、当月收益、累计收益）',
+            detailsHint:
+              '提示：明细区已启用滚动条。交易日模式按“月汇总”展示，避免表格过长。',
+
+            secResult: '结果',
+            pillRealtime: '实时更新',
+
+            kpiFinal: '周期末总金额',
+            kpiFinalHint: '= 本金 + 累计收益',
+            kpiProfit: '净收益',
+            kpiProfitHint: '不含任何手续费/税费',
+            kpiTotalReturn: '累计收益率',
+            kpiTotalReturnHint: '（净收益 ÷ 本金）',
+            kpiAnnualized: '年化收益率（折算）',
+
+            ddBoxTitleDefault: '回撤控制下的收益',
+
+            footTitle: '说明：',
+            footLine1:
+              '• “交易日精确模式”只在交易日滚动收益，且需要交易日历覆盖整个模拟区间。',
+            footLine2: '• 该页面仅用于数学计算演示，不构成投资建议。',
+
+            tipTitle: '说明',
+
+            // dynamic strings
+            errNeedCalendar: '需要交易日历',
+            errNeedCalendarHint: '交易日精确计算需要导入覆盖区间的交易日历。',
+            bannerNeedImport:
+              '⚠️ 你选择了“按交易日精确模式”，但当前市场未导入交易日历。请导入覆盖区间的日历后再计算。',
+            calImportedPrefix: '已导入',
+            calImportedCN: 'A股',
+            calImportedUS: '美股',
+            calImportedMid: '交易日历：',
+            calImportedSuffix: '个交易日',
+            calCoverNotEnoughPrefix: '⚠️ 当前日历覆盖不足：',
+            calCoverNeed: '。需要覆盖 ',
+            annualHintMonthly: '按月折算：年化=(期末/本金)^(12/月数)-1',
+            annualHintTradingTpl:
+              '按交易日精确：区间 {start} ~ {end}（交易日 {td} 天）',
+
+            // dd titles/hints
+            ddTitleSingle: '回撤控制下的收益（单次回撤，对比不同幅度）',
+            ddHintSingle:
+              '不同回撤幅度下的净收益/期末余额/回撤前峰值 Peak；可切换最差情况或指定月份。',
+            ddTitleMulti: '回撤控制下的收益（多次回撤，手动序列）',
+            ddHintMulti:
+              '按回撤序列触发多次回撤后继续运行；同时列出每次回撤对应的 Peak 与回撤后余额。',
+            ddTitleRandom: '回撤控制下的收益（随机回撤序列，分位数）',
+            ddHintRandom:
+              '随机生成回撤事件序列并重复模拟，输出收益分位数：P50（中位）与 P90最差（10分位）。',
+
+            // table headers
+            thMonth: '月份',
+            thGain: '当月收益',
+            thProfit: '累计收益',
+            thBalance: '期末余额',
+
+            thDd: '回撤',
+            thNetProfit: '净收益',
+            thFinalBalance: '期末余额',
+            thPeak: 'Peak（回撤前峰值）',
+            thWorstMonth: '最差月份',
+            thFixedMonth: '发生月份',
+
+            // random summary
+            thMetric: '指标',
+            thP50: 'P50（中位）',
+            thP90Worst: 'P90最差（10分位）',
+            thMin: '最小',
+            thMax: '最大',
+
+            rndMetaRuns: '模拟次数：',
+            rndMetaSeed: '｜ 随机种子：',
+            rndExplain:
+              '解释：P90最差=第10分位（有 90% 的模拟结果不低于该值）。',
+
+            // copy
+            copyBtnCopied: '已复制 ✓',
+            copyBtnDefault: '复制结果',
+            copyFail:
+              '复制失败：你的浏览器可能不支持剪贴板权限。\n你可以手动选中并复制。',
+
+            // copy summary lines
+            copySimMonthlyTpl: '模拟: 按月（月收益率 {mr}%）',
+            copySimTradingTpl:
+              '模拟: 按交易日精确（{mkt}，{start} ~ {end}，交易日 {td}）',
+            copyDailyRateTpl: '日收益率: {dr}%',
+            copyAnnualRateTpl: '年化收益率: {ar}%（按每年交易日数逐日折算）',
+            copyPrincipalTpl: '本金: {p} 元',
+            copyDurationTpl: '时长: {m} 个月',
+            copyModeCompound: '方式: 复投（复利）',
+            copyModeSimple: '方式: 不复投（单利）',
+            copyTotalTpl: '总金额: {v}',
+            copyProfitTpl: '净收益: {v}',
+            copyTotalReturnTpl: '累计收益率: {v}',
+            copyAnnualizedTpl: '年化(折算): {v}',
+
+            // alerts
+            alertCalParseFail: '交易日历解析失败',
+            alertCalReadFail: '读取/解析交易日历失败，请检查 JSON 文件。',
+
+            // sim text bits
+            mktCN: 'A股',
+            mktUS: '美股',
+          },
+
+          en: {
+            pageTitle: 'Investment Return Calculator (Monthly / Trading-Day Precision)',
+            pageSub:
+              '✅ Switch A-share / U.S. market | ✅ Import trading calendar JSON for precise trading-day returns',
+
+            secParams: 'Parameters',
+            pillInputUpdate: 'Live update',
+            lblSimMode: 'Simulation',
+            optSimMonthly: 'Monthly (input monthly return)',
+            optSimTradingDays: 'Trading days (precise: CN/US)',
+            helpSimMode:
+              'Note: Monthly = settle once per month. Trading days = apply returns only on dates inside the imported trading calendar (holidays/halts excluded).',
+
+            lblMarket: 'Market',
+            optMarketCN: 'China A-share',
+            optMarketUS: 'U.S. stocks',
+            helpMarket:
+              'Note: Manually switch CN/US. Each market can import its own trading calendar (supports importing both).',
+
+            lblStartDate: 'Start date',
+            helpStartDate:
+              'Note: Trading-day simulation runs from this date (inclusive) to (start + duration) (end date exclusive). Returns accrue only on trading days.',
+
+            lblRateMode: 'Return input',
+            optRateDaily: 'Daily return (% per trading day)',
+            optRateAnnual: 'Annualized return (%)',
+            helpRateMode:
+              'Note: Daily = fixed return each trading day. Annualized = convert precisely by trading days per calendar year (varies by year).',
+
+            lblDailyRate: 'Daily return (%)',
+            helpDailyRate:
+              'Note: e.g. 0.1 means +0.1% per trading day (compound uses rolling balance).',
+
+            lblAnnualRate: 'Annualized return (%)',
+            helpAnnualRate:
+              'Note: Precise conversion: for each day, use trading days N in that calendar year. r_day=(1+annual)^(1/N)-1 so full-year trading days ≈ annualized.',
+
+            lblCalendar: 'Trading calendar JSON',
+            calFmtTitle: 'Supported formats (date must be YYYY-MM-DD):',
+            calFmt1Prefix: '1)',
+            calFmt1Suffix: '(import into current market)',
+            calFmt2Prefix: '2)',
+            calFmt2Mid: 'or',
+            calSuggest:
+              'Tip: Import a full calendar covering your whole simulation range (include all years if crossing years).',
+            helpCalendar:
+              'Note: For precise stats, trading-day mode will <strong>stop and show missing range</strong> if calendar is not imported or coverage is insufficient (no Mon–Fri approximation).',
+            calStatusNotImported:
+              'Trading calendar not imported: precise trading-day mode cannot run',
+
+            lblPrincipal: 'Principal (CNY)',
+            helpPrincipal: 'Note: Initial invested amount.',
+
+            lblMonthlyRate: 'Monthly return (%)',
+            helpMonthlyRate: 'Note: e.g. 2 means +2% per month.',
+
+            lblDuration: 'Duration',
+            optUnitMonths: 'Months',
+            optUnitYears: 'Years',
+            helpDuration:
+              'Note: Years will be converted to months (e.g. 30 years = 360 months). Trading-day simulation uses this to compute end date.',
+
+            lblCalcMode: 'Mode',
+            optCompound: 'Compound (reinvest)',
+            optSimple: 'Simple (no reinvest)',
+            helpCalcMode:
+              'Note: Compound = gains added to balance and keep rolling. Simple = gains computed on initial principal.',
+
+            lblShowAnnual: 'Show annualized',
+            txtShowAnnual: 'Show annualized return (converted)',
+            helpShowAnnual:
+              'Note: Monthly: (final/principal)^(12/months)-1. Trading days: (final/principal)^(1/years)-1 where years = calendarDays/365.25.',
+
+            secDD: 'Drawdown control',
+            pillDD: 'Single / Multi / Random',
+
+            lblEnableDD: 'Enable drawdown',
+            txtEnableDD: 'Enable drawdown control & stats',
+            helpEnableDD:
+              'Note: Drawdown = one-time drop of X% from historical peak, then continue simulation.',
+
+            lblDDMode: 'Drawdown mode',
+            optDDSingle: 'Single drawdown (compare magnitudes)',
+            optDDMulti: 'Multiple drawdowns (manual sequence)',
+            optDDRandom: 'Random drawdowns (Monte Carlo)',
+            helpDDMode:
+              'Note: Single = evaluate different magnitudes. Multi = apply a sequence. Random = generate by probability/count and show quantiles (P50 / P90 worst).',
+
+            lblDDList: 'Drawdown list (%)',
+            helpDDList:
+              'Note: Comma-separated, e.g. 5,10,15,20. Compute net profit/final balance/Peak-before-DD for each.',
+
+            lblDDWhen: 'When to drawdown',
+            optDDWorst: 'Worst-case (once in any month)',
+            optDDFixed: 'Fixed month (once)',
+            helpDDWhen:
+              'Note: Worst = enumerate month 1..N and take worst final. Fixed = trigger once at the chosen month index.',
+
+            lblDDMonth: 'Fixed month',
+            helpDDMonth:
+              'Note: e.g. 6 means trigger after month 6 ends (same month index in trading-day mode).',
+
+            lblDDSeq: 'Drawdown sequence',
+            helpDDSeq:
+              'Note: Format: dd%@monthIndex, comma-separated; e.g. 10@6,20@18. Multiple events in same month allowed (applied in input order).',
+
+            lblDDPool: 'Drawdown pool (%)',
+            helpDDPool:
+              'Note: Random drawdown magnitudes are sampled uniformly from the list (repeat a number to weight it).',
+
+            lblRandMethod: 'Random method',
+            optRandProb: 'Monthly probability',
+            optRandCount: 'Fixed count',
+            helpRandMethod:
+              'Note: Random drawdown uses month as granularity: by monthly probability or randomly pick N months in the whole period.',
+
+            lblRandProb: 'Monthly DD probability (%)',
+            helpRandProb:
+              'Note: e.g. 2 means 2% chance each month to trigger one random drawdown.',
+
+            lblRandCount: 'Drawdown count',
+            helpRandCount:
+              'Note: e.g. 6 means randomly select 6 months in the whole period.',
+
+            lblSimRuns: 'Simulation runs',
+            helpSimRuns:
+              'Note: More runs = stabler quantiles. Recommended 1000–10000.',
+
+            lblSimSeed: 'Random seed',
+            helpSimSeed:
+              'Note: auto = different each run. Enter a fixed string to reproduce results.',
+
+            btnReset: 'Reset (demo)',
+            btnCopy: 'Copy result',
+
+            detailsSummary:
+              'Show monthly breakdown (balance, monthly gain, cumulative profit)',
+            detailsHint:
+              'Tip: The table is scrollable. Trading-day mode shows monthly aggregates to avoid huge tables.',
+
+            secResult: 'Results',
+            pillRealtime: 'Live',
+
+            kpiFinal: 'Final amount',
+            kpiFinalHint: '= Principal + Cumulative profit',
+            kpiProfit: 'Net profit',
+            kpiProfitHint: 'Fees/taxes not included',
+            kpiTotalReturn: 'Total return',
+            kpiTotalReturnHint: '(Net profit ÷ Principal)',
+            kpiAnnualized: 'Annualized (converted)',
+
+            ddBoxTitleDefault: 'Return under drawdown control',
+
+            footTitle: 'Notes:',
+            footLine1:
+              '• Precise trading-day mode accrues returns only on trading days and requires a calendar covering the full range.',
+            footLine2:
+              '• This page is for mathematical demonstration only and is not investment advice.',
+
+            tipTitle: 'Info',
+
+            // dynamic
+            errNeedCalendar: 'Trading calendar required',
+            errNeedCalendarHint:
+              'Precise trading-day calculation requires importing a calendar that covers the whole range.',
+            bannerNeedImport:
+              '⚠️ You selected trading-day precision, but the calendar for this market is not imported. Please import a calendar that covers the range.',
+            calImportedPrefix: 'Imported',
+            calImportedCN: 'CN',
+            calImportedUS: 'US',
+            calImportedMid: 'calendar:',
+            calImportedSuffix: 'trading days',
+            calCoverNotEnoughPrefix: '⚠️ Calendar coverage insufficient: ',
+            calCoverNeed: '. Need coverage ',
+            annualHintMonthly:
+              'Monthly conversion: (final/principal)^(12/months)-1',
+            annualHintTradingTpl:
+              'Precise trading-day: {start} ~ {end} (trading days: {td})',
+
+            ddTitleSingle:
+              'Return under drawdown control (single DD, compare magnitudes)',
+            ddHintSingle:
+              'Compare net profit/final balance/Peak-before-DD across magnitudes; switch worst-case or fixed month.',
+            ddTitleMulti:
+              'Return under drawdown control (multiple DDs, manual sequence)',
+            ddHintMulti:
+              'Apply multiple drawdowns in sequence; list Peak and post-DD balance for each event.',
+            ddTitleRandom:
+              'Return under drawdown control (random DDs, quantiles)',
+            ddHintRandom:
+              'Generate random drawdown sequences and repeat simulations; report P50 (median) and P90 worst (10th percentile).',
+
+            thMonth: 'Month',
+            thGain: 'Monthly gain',
+            thProfit: 'Cumulative profit',
+            thBalance: 'End balance',
+
+            thDd: 'Drawdown',
+            thNetProfit: 'Net profit',
+            thFinalBalance: 'End balance',
+            thPeak: 'Peak (before DD)',
+            thWorstMonth: 'Worst month',
+            thFixedMonth: 'Month',
+
+            thMetric: 'Metric',
+            thP50: 'P50 (median)',
+            thP90Worst: 'P90 worst (p10)',
+            thMin: 'Min',
+            thMax: 'Max',
+
+            rndMetaRuns: 'Runs: ',
+            rndMetaSeed: ' | Seed: ',
+            rndExplain:
+              'Explanation: P90 worst = 10th percentile (90% of results are not below this).',
+
+            copyBtnCopied: 'Copied ✓',
+            copyBtnDefault: 'Copy result',
+            copyFail:
+              'Copy failed: Clipboard access may be blocked by your browser.\nPlease copy manually.',
+
+            copySimMonthlyTpl: 'Sim: Monthly (monthly return {mr}%)',
+            copySimTradingTpl:
+              'Sim: Trading-day precision ({mkt}, {start} ~ {end}, trading days {td})',
+            copyDailyRateTpl: 'Daily return: {dr}%',
+            copyAnnualRateTpl:
+              'Annualized return: {ar}% (converted day-by-day by trading days per year)',
+            copyPrincipalTpl: 'Principal: {p} CNY',
+            copyDurationTpl: 'Duration: {m} months',
+            copyModeCompound: 'Mode: Compound (reinvest)',
+            copyModeSimple: 'Mode: Simple (no reinvest)',
+            copyTotalTpl: 'Final amount: {v}',
+            copyProfitTpl: 'Net profit: {v}',
+            copyTotalReturnTpl: 'Total return: {v}',
+            copyAnnualizedTpl: 'Annualized: {v}',
+
+            alertCalParseFail: 'Trading calendar parsing failed',
+            alertCalReadFail: 'Failed to read/parse calendar JSON. Please check the file.',
+
+            mktCN: 'CN',
+            mktUS: 'US',
+          },
+        },
+      };
+
+      function getLang() {
+        return I18N.lang;
+      }
+
+      function t(key, vars) {
+        const lang = getLang();
+        const s = (I18N.dict[lang] && I18N.dict[lang][key]) || '';
+        if (!vars) return s;
+        return String(s).replace(/\{(\w+)\}/g, (_, k) =>
+          vars[k] === undefined ? `{${k}}` : String(vars[k]),
+        );
+      }
+
+      function applyLangToDOM() {
+        const lang = getLang();
+        document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+
+        // toggle button label shows target language
+        const langBtn = document.getElementById('langBtn');
+        if (langBtn) langBtn.textContent = lang === 'zh' ? 'EN' : '中';
+
+        // static text nodes
+        document.querySelectorAll('[data-i18n]').forEach((el) => {
+          const key = el.getAttribute('data-i18n');
+          if (!key) return;
+          // avoid overwriting tooltip-generated labels (we put data-i18n on inner spans, not the label itself)
+          if (el.classList && el.classList.contains('qmark')) return;
+
+          const html = el.getAttribute('data-i18n-html') === '1';
+          const val = t(key);
+          if (html) el.innerHTML = val;
+          else el.textContent = val;
+        });
+
+        // update existing tooltip tips after language switch
+        document.querySelectorAll('.qmark[data-i18n]').forEach((q) => {
+          const key = q.getAttribute('data-i18n');
+          if (!key) return;
+          q.dataset.tip = t(key).replace(/\s+/g, ' ').trim();
+        });
+
+        // update calendar banner hint title in bottom sheet if open (optional: keep existing body)
+        // (no-op intentionally)
+      }
+
+      function setLang(lang) {
+        I18N.lang = lang === 'en' ? 'en' : 'zh';
+        try {
+          localStorage.setItem('i18n_lang', I18N.lang);
+        } catch (e) {}
+        applyLangToDOM();
+      }
+
+      function toggleLang() {
+        setLang(getLang() === 'zh' ? 'en' : 'zh');
+      }
+
+      /* ===== format ===== */
+      const fmtCNY = (n) => {
+        if (!isFinite(n)) return '-';
+        return new Intl.NumberFormat(getLang() === 'zh' ? 'zh-CN' : 'en-US', {
+          style: 'currency',
+          currency: 'CNY',
+          maximumFractionDigits: 2,
+        }).format(n);
+      };
+
+      const fmtPct = (x) => {
+        if (!isFinite(x)) return '-';
+        return (x * 100).toFixed(2) + '%';
+      };
+
+      const clamp = (n, min, max) => Math.min(Math.max(n, min), max);
+      const formatNow = () => {
+        const lang = getLang();
+        return new Date().toLocaleString(lang === 'zh' ? 'zh-CN' : 'en-US', {
+          hour12: false,
+        });
+      };
+
+      const isMobileUI = () => {
+        const mq =
+          window.matchMedia && window.matchMedia('(max-width: 720px)').matches;
+        const coarse =
+          window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+        return mq || coarse;
+      };
+
+      /* ===== parsing ===== */
+      const isISODate = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s);
+
+      function parsePctList(s) {
+        return (s || '')
+          .split(/[，,\s]+/g)
+          .map((x) => Number(String(x).trim()))
+          .filter((x) => isFinite(x) && x > 0 && x < 100)
+          .sort((a, b) => a - b);
+      }
+
+      function parseSeq(s) {
+        const raw = (s || '')
+          .split(/[，,]+/g)
+          .map((x) => x.trim())
+          .filter(Boolean);
+        const events = [];
+        for (const item of raw) {
+          const m = item.match(/^(\d+(?:\.\d+)?)\s*@\s*(\d+)\s*$/);
+          if (!m) continue;
+          const dd = Number(m[1]);
+          const month = Number(m[2]);
+          if (!isFinite(dd) || !isFinite(month)) continue;
+          if (dd <= 0 || dd >= 100) continue;
+          events.push({ dd, month });
+        }
+        events.sort((a, b) => a.month - b.month);
+        return events;
+      }
+
+      function hashSeed(str) {
+        let h = 1779033703 ^ str.length;
+        for (let i = 0; i < str.length; i++) {
+          h = Math.imul(h ^ str.charCodeAt(i), 3432918353);
+          h = (h << 13) | (h >>> 19);
+        }
+        return () => {
+          h = Math.imul(h ^ (h >>> 16), 2246822507);
+          h = Math.imul(h ^ (h >>> 13), 3266489909);
+          h ^= h >>> 16;
+          return h >>> 0;
+        };
+      }
+
+      function mulberry32(a) {
+        return () => {
+          let t0 = (a += 0x6d2b79f5);
+          t0 = Math.imul(t0 ^ (t0 >>> 15), t0 | 1);
+          t0 ^= t0 + Math.imul(t0 ^ (t0 >>> 7), t0 | 61);
+          return ((t0 ^ (t0 >>> 14)) >>> 0) / 4294967296;
+        };
+      }
+
+      function quantile(sorted, q) {
+        if (!sorted.length) return NaN;
+        const pos = (sorted.length - 1) * q;
+        const base = Math.floor(pos);
+        const rest = pos - base;
+        if (sorted[base + 1] === undefined) return sorted[base];
+        return sorted[base] + rest * (sorted[base + 1] - sorted[base]);
+      }
+
+      /* ===== table ===== */
+      function buildTable(headers, rows) {
+        const table = document.createElement('table');
+        const thead = document.createElement('thead');
+        const trh = document.createElement('tr');
+        headers.forEach((h, idx) => {
+          const th = document.createElement('th');
+          th.textContent = h;
+          if (idx === 0) th.style.textAlign = 'center';
+          trh.appendChild(th);
+        });
+        thead.appendChild(trh);
+        table.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
+        rows.forEach((row) => {
+          const tr = document.createElement('tr');
+          row.forEach((cell, idx) => {
+            const td = document.createElement('td');
+            if (idx === 0) td.style.textAlign = 'center';
+            if (cell && typeof cell === 'object' && 'text' in cell) {
+              td.textContent = cell.text;
+              if (cell.className) td.className = cell.className;
+            } else {
+              td.textContent = String(cell);
+            }
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        return table;
+      }
+
+      /* ===== calendars (precise) ===== */
+      const calendars = {
+        CN: null,
+        US: null,
+        meta: { CN: null, US: null },
+        yearCount: { CN: new Map(), US: new Map() },
+      };
+
+      const normalizeKey = (k) =>
+        String(k || '')
+          .trim()
+          .toLowerCase();
+      const mapMarketKey = (k) => {
+        const nk = normalizeKey(k);
+        if (['cn', 'a股', 'ashare', 'china', 'sse', 'szse'].includes(nk))
+          return 'CN';
+        if (['us', '美股', 'usa', 'nyse', 'nasdaq'].includes(nk)) return 'US';
+        return null;
+      };
+
+      function toISODate(d) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+      }
+
+      function addMonths(date, months) {
+        const d = new Date(date.getTime());
+        const day = d.getDate();
+        d.setMonth(d.getMonth() + months);
+        if (d.getDate() !== day) d.setDate(0);
+        return d;
+      }
+
+      function daysDiff(a, b) {
+        return (b.getTime() - a.getTime()) / 86400000;
+      }
+
+      function buildYearCountFromISOList(isoList) {
+        const m = new Map();
+        for (const iso of isoList) {
+          const y = Number(String(iso).slice(0, 4));
+          if (!isFinite(y)) continue;
+          m.set(y, (m.get(y) || 0) + 1);
+        }
+        return m;
+      }
+
+      function setCalendar(market, dates, source) {
+        const arr = (dates || [])
+          .map(String)
+          .map((d) => d.trim())
+          .filter((d) => isISODate(d));
+
+        const uniq = Array.from(new Set(arr)).sort();
+        calendars[market] = new Set(uniq);
+        calendars.meta[market] = {
+          count: uniq.length,
+          min: uniq[0] || null,
+          max: uniq[uniq.length - 1] || null,
+          source,
+        };
+        calendars.yearCount[market] = buildYearCountFromISOList(uniq);
+      }
+
+      function parseCalendarJSON(raw, currentMarket) {
+        const data = JSON.parse(raw);
+
+        if (Array.isArray(data)) {
+          setCalendar(currentMarket, data, 'array');
+          return { ok: true, markets: [currentMarket] };
+        }
+
+        if (data && typeof data === 'object') {
+          const touched = [];
+          for (const [k, v] of Object.entries(data)) {
+            const mk = mapMarketKey(k) || (k === 'CN' || k === 'US' ? k : null);
+            if (!mk) continue;
+            if (Array.isArray(v)) {
+              setCalendar(mk, v, 'object');
+              touched.push(mk);
+            }
+          }
+          if (touched.length)
+            return { ok: true, markets: Array.from(new Set(touched)) };
+        }
+
+        return { ok: false, error: t('alertCalParseFail') };
+      }
+
+      function calendarCoversRange(market, startISO, endISOExclusive) {
+        const meta = calendars.meta[market];
+        if (!meta || !meta.min || !meta.max)
+          return { ok: false, reason: getLang() === 'zh' ? '未导入' : 'not imported' };
+
+        const endDate = new Date(endISOExclusive + 'T00:00:00');
+        endDate.setDate(endDate.getDate() - 1);
+        const lastNeeded = toISODate(endDate);
+
+        if (startISO < meta.min)
+          return {
+            ok: false,
+            reason:
+              (getLang() === 'zh'
+                ? `缺少起始段（最早只有 ${meta.min}）`
+                : `missing beginning (earliest is ${meta.min})`),
+          };
+        if (lastNeeded > meta.max)
+          return {
+            ok: false,
+            reason:
+              (getLang() === 'zh'
+                ? `缺少末尾段（最晚只有 ${meta.max}）`
+                : `missing ending (latest is ${meta.max})`),
+          };
+        return { ok: true };
+      }
+
+      function listTradingDatesStrict(start, endExclusive, market) {
+        const set = calendars[market];
+        if (!set) return { ok: false, error: t('errNeedCalendarHint') };
+
+        const out = [];
+        const d = new Date(start.getTime());
+        while (d < endExclusive) {
+          const iso = toISODate(d);
+          if (set.has(iso)) out.push(new Date(d.getTime()));
+          d.setDate(d.getDate() + 1);
+        }
+        return { ok: true, dates: out };
+      }
+
+      function tradingDaysInYear(market, year) {
+        const yc = calendars.yearCount[market];
+        if (!yc || !yc.size) return null;
+        const n = yc.get(year);
+        return n || 0;
+      }
+
+      /* ===== monthly simulation (unchanged) ===== */
+      function calcMonthlyTimeline({
+        principal,
+        monthlyRate,
+        months,
+        mode,
+        events,
+      }) {
+        const r = monthlyRate;
+        let balance = principal;
+        let peak = principal;
+
+        const evMap = new Map();
+        (events || []).forEach((e) => {
+          const key = String(e.month);
+          if (!evMap.has(key)) evMap.set(key, []);
+          evMap.get(key).push({ dd: e.dd });
+        });
+
+        const rows = [];
+        const appliedEvents = [];
+        const gainPerMonth = principal * r;
+
+        for (let i = 1; i <= months; i++) {
+          const gain = mode === 'compound' ? balance * r : gainPerMonth;
+          balance += gain;
+          if (balance > peak) peak = balance;
+
+          const list = evMap.get(String(i)) || [];
+          for (const e of list) {
+            const dd = clamp(e.dd / 100, 0, 0.999999);
+            const peakBefore = peak;
+            balance = peakBefore * (1 - dd);
+            peak = Math.max(peak, balance);
+            appliedEvents.push({
+              month: i,
+              dd: e.dd,
+              peakBefore,
+              balanceAfter: balance,
+            });
+          }
+
+          const profit = balance - principal;
+          rows.push({ m: i, balance, gain, profit, peak });
+        }
+
+        const profit = balance - principal;
+        const totalReturn = principal > 0 ? profit / principal : 0;
+        const annualized =
+          principal > 0 && months > 0
+            ? Math.pow(balance / principal, 12 / months) - 1
+            : 0;
+
+        return {
+          balance,
+          profit,
+          totalReturn,
+          annualized,
+          rows,
+          appliedEvents,
+          extra: { monthsElapsed: months },
+        };
+      }
+
+      /* ===== trading-days simulation (STRICT + precise annual->daily by year) ===== */
+      function calcTradingDaysTimelineStrict({
+        principal,
+        startDate,
+        months,
+        mode,
+        market,
+        rateMode,
+        dailyRateDecimal,
+        annualRateDecimal,
+        eventsByMonth,
+      }) {
+        const start = new Date(startDate.getTime());
+        const endExclusive = addMonths(start, months);
+        const startISO = toISODate(start);
+        const endISO = toISODate(endExclusive);
+
+        const cover = calendarCoversRange(market, startISO, endISO);
+        if (!cover.ok) {
+          return {
+            ok: false,
+            error:
+              (getLang() === 'zh'
+                ? `交易日历覆盖不足：${cover.reason}。需要覆盖区间 ${startISO} ~ ${toISODate(
+                    new Date(endExclusive.getTime() - 86400000),
+                  )}。`
+                : `Calendar coverage insufficient: ${cover.reason}. Need coverage ${startISO} ~ ${toISODate(
+                    new Date(endExclusive.getTime() - 86400000),
+                  )}.`),
+            extra: { startISO, endISO },
+          };
+        }
+
+        const { ok, dates, error } = listTradingDatesStrict(
+          start,
+          endExclusive,
+          market,
+        );
+        if (!ok) {
+          return {
+            ok: false,
+            error: error || t('errNeedCalendarHint'),
+            extra: { startISO, endISO },
+          };
+        }
+
+        let balance = principal;
+        let peak = principal;
+
+        const appliedEvents = [];
+        const rows = [];
+
+        let currentMonthIdx = 1;
+        let monthEndExclusive = addMonths(start, 1);
+        let monthGain = 0;
+
+        const gainPerDaySimpleFixed = principal * (dailyRateDecimal || 0);
+
+        const flushMonth = (monthIdx) => {
+          const monthProfit = balance - principal;
+          rows.push({
+            m: monthIdx,
+            balance,
+            gain: monthGain,
+            profit: monthProfit,
+            peak,
+          });
+          monthGain = 0;
+        };
+
+        const getDailyRateForDate = (d) => {
+          if (rateMode === 'daily') return dailyRateDecimal || 0;
+
+          const ann = annualRateDecimal || 0;
+          const y = d.getFullYear();
+          const n = tradingDaysInYear(market, y);
+          if (!n || n <= 0) return null;
+
+          return Math.pow(1 + ann, 1 / n) - 1;
+        };
+
+        for (const d of dates) {
+          while (d >= monthEndExclusive && currentMonthIdx <= months) {
+            const evs = eventsByMonth.get(String(currentMonthIdx)) || [];
+            for (const e of evs) {
+              const dd = clamp(e.dd / 100, 0, 0.999999);
+              const peakBefore = peak;
+              balance = peakBefore * (1 - dd);
+              peak = Math.max(peak, balance);
+              appliedEvents.push({
+                month: currentMonthIdx,
+                dd: e.dd,
+                peakBefore,
+                balanceAfter: balance,
+              });
+            }
+            flushMonth(currentMonthIdx);
+            currentMonthIdx++;
+            monthEndExclusive = addMonths(start, currentMonthIdx);
+          }
+
+          if (currentMonthIdx > months) break;
+
+          const rDay = getDailyRateForDate(d);
+          if (rDay === null) {
+            return {
+              ok: false,
+              error:
+                (getLang() === 'zh'
+                  ? `年化折算失败：交易日历缺少年份 ${d.getFullYear()} 的完整交易日统计（请导入该年完整日历）。`
+                  : `Annualized conversion failed: missing full-year trading-day stats for ${d.getFullYear()} (please import the full calendar for that year).`),
+              extra: { startISO, endISO },
+            };
+          }
+
+          const gain =
+            mode === 'compound'
+              ? balance * rDay
+              : rateMode === 'daily'
+              ? gainPerDaySimpleFixed
+              : principal * rDay;
+          balance += gain;
+          monthGain += gain;
+          if (balance > peak) peak = balance;
+        }
+
+        while (currentMonthIdx <= months) {
+          const evs = eventsByMonth.get(String(currentMonthIdx)) || [];
+          for (const e of evs) {
+            const dd = clamp(e.dd / 100, 0, 0.999999);
+            const peakBefore = peak;
+            balance = peakBefore * (1 - dd);
+            peak = Math.max(peak, balance);
+            appliedEvents.push({
+              month: currentMonthIdx,
+              dd: e.dd,
+              peakBefore,
+              balanceAfter: balance,
+            });
+          }
+          flushMonth(currentMonthIdx);
+          currentMonthIdx++;
+        }
+
+        const profit = balance - principal;
+        const totalReturn = principal > 0 ? profit / principal : 0;
+
+        const calDays = Math.max(1, daysDiff(start, endExclusive));
+        const years = calDays / 365.25;
+        const annualized =
+          principal > 0 && years > 0
+            ? Math.pow(balance / principal, 1 / years) - 1
+            : 0;
+
+        return {
+          ok: true,
+          balance,
+          profit,
+          totalReturn,
+          annualized,
+          rows,
+          appliedEvents,
+          extra: {
+            startISO,
+            endISO,
+            tradingDays: dates.length,
+            calendarDays: calDays,
+          },
+        };
+      }
+
+      /* ===== drawdown glue ===== */
+      function buildEventsMapFromSingle(month, dd) {
+        const map = new Map();
+        map.set(String(month), [{ dd }]);
+        return map;
+      }
+      function buildEventsMapFromSeq(seq) {
+        const map = new Map();
+        seq.forEach((e) => {
+          const k = String(e.month);
+          if (!map.has(k)) map.set(k, []);
+          map.get(k).push({ dd: e.dd });
+        });
+        return map;
+      }
+
+      function calcBaseline(params) {
+        if (params.simMode === 'monthly') {
+          return calcMonthlyTimeline({
+            principal: params.principal,
+            monthlyRate: params.monthlyRate,
+            months: params.months,
+            mode: params.mode,
+            events: [],
+          });
+        }
+        return calcTradingDaysTimelineStrict({
+          principal: params.principal,
+          startDate: params.startDate,
+          months: params.months,
+          mode: params.mode,
+          market: params.market,
+          rateMode: params.rateMode,
+          dailyRateDecimal: params.dailyRateDecimal,
+          annualRateDecimal: params.annualRateDecimal,
+          eventsByMonth: new Map(),
+        });
+      }
+
+      function calcSingleDrawdown(params) {
+        if (params.simMode === 'monthly') {
+          const tl = calcMonthlyTimeline({
+            principal: params.principal,
+            monthlyRate: params.monthlyRate,
+            months: params.months,
+            mode: params.mode,
+            events: [{ dd: params.drawdownPct, month: params.drawdownMonth }],
+          });
+          const ev = tl.appliedEvents[0] || null;
+          return {
+            ok: true,
+            dd: params.drawdownPct,
+            month: params.drawdownMonth,
+            finalBalance: tl.balance,
+            finalProfit: tl.profit,
+            peakBefore: ev ? ev.peakBefore : NaN,
+          };
+        }
+
+        const eventsByMonth = buildEventsMapFromSingle(
+          params.drawdownMonth,
+          params.drawdownPct,
+        );
+        const tl = calcTradingDaysTimelineStrict({
+          principal: params.principal,
+          startDate: params.startDate,
+          months: params.months,
+          mode: params.mode,
+          market: params.market,
+          rateMode: params.rateMode,
+          dailyRateDecimal: params.dailyRateDecimal,
+          annualRateDecimal: params.annualRateDecimal,
+          eventsByMonth,
+        });
+
+        if (!tl.ok) return { ok: false, error: tl.error };
+
+        const ev =
+          tl.appliedEvents.find((e) => e.month === params.drawdownMonth) ||
+          null;
+        return {
+          ok: true,
+          dd: params.drawdownPct,
+          month: params.drawdownMonth,
+          finalBalance: tl.balance,
+          finalProfit: tl.profit,
+          peakBefore: ev ? ev.peakBefore : NaN,
+        };
+      }
+
+      function calcWorstSingle(params) {
+        let best = null;
+        for (let m = 1; m <= params.months; m++) {
+          const r = calcSingleDrawdown({ ...params, drawdownMonth: m });
+          if (!r.ok) return r;
+          if (!best || r.finalBalance < best.finalBalance) best = r;
+        }
+        return (
+          best || {
+            ok: true,
+            dd: params.drawdownPct,
+            month: 0,
+            finalBalance: params.principal,
+            finalProfit: 0,
+            peakBefore: NaN,
+          }
+        );
+      }
+
+      /* ===== renderers ===== */
+      function renderMonthlyTable(rows) {
+        const headers = [t('thMonth'), t('thGain'), t('thProfit'), t('thBalance')];
+        const body = rows.map((r) => [
+          r.m,
+          fmtCNY(r.gain),
+          fmtCNY(r.profit),
+          fmtCNY(r.balance),
+        ]);
+        return buildTable(headers, body);
+      }
+
+      function renderSingleDdTable({ base, results, strategy }) {
+        const headers = [
+          t('thDd'),
+          t('thNetProfit'),
+          t('thFinalBalance'),
+          t('thPeak'),
+          strategy === 'fixed' ? t('thFixedMonth') : t('thWorstMonth'),
+        ];
+        const body = [];
+        body.push(['-', fmtCNY(base.profit), fmtCNY(base.balance), '-', '-']);
+
+        results.forEach((r) => {
+          const prClass = r.finalProfit >= 0 ? 'good' : 'bad';
+          body.push([
+            r.dd + '%',
+            { text: fmtCNY(r.finalProfit), className: prClass },
+            fmtCNY(r.finalBalance),
+            isFinite(r.peakBefore) ? fmtCNY(r.peakBefore) : '-',
+            String(r.month),
+          ]);
+        });
+
+        return buildTable(headers, body);
+      }
+
+      function renderMultiSummary({ base, tl, events }) {
+        const headers = [getLang() === 'zh' ? '项目' : 'Item', getLang() === 'zh' ? '数值' : 'Value'];
+        const ddCount = events.length;
+        const worstPeak = tl.rows.reduce(
+          (acc, r) => Math.max(acc, r.peak),
+          base.balance,
+        );
+        const body = [
+          [getLang() === 'zh' ? '回撤次数' : 'Drawdowns', String(ddCount)],
+          [
+            t('thNetProfit'),
+            {
+              text: fmtCNY(tl.profit),
+              className: tl.profit >= 0 ? 'good' : 'bad',
+            },
+          ],
+          [t('thFinalBalance'), fmtCNY(tl.balance)],
+          [
+            getLang() === 'zh' ? '相对无回撤差值' : 'Delta vs no-DD',
+            {
+              text: fmtCNY(tl.balance - base.balance),
+              className: tl.balance - base.balance >= 0 ? 'good' : 'bad',
+            },
+          ],
+          [
+            getLang() === 'zh' ? '周期内最高峰值（Peak）' : 'Peak during period',
+            fmtCNY(worstPeak),
+          ],
+        ];
+        const table = buildTable(headers, body);
+
+        const evHeaders = [
+          getLang() === 'zh' ? '序号' : '#',
+          t('thMonth'),
+          t('thDd'),
+          getLang() === 'zh' ? '回撤前 Peak' : 'Peak before DD',
+          getLang() === 'zh' ? '回撤后余额' : 'Balance after DD',
+        ];
+        const evRows = tl.appliedEvents.map((e, idx) => [
+          String(idx + 1),
+          String(e.month),
+          e.dd + '%',
+          fmtCNY(e.peakBefore),
+          fmtCNY(e.balanceAfter),
+        ]);
+        const evTable = buildTable(
+          evHeaders,
+          evRows.length ? evRows : [['-', '-', '-', '-', '-']],
+        );
+
+        const wrap = document.createElement('div');
+        wrap.className = 'table-scroll';
+        wrap.appendChild(table);
+
+        const wrap2 = document.createElement('div');
+        wrap2.className = 'table-scroll';
+        wrap2.style.marginTop = '10px';
+        wrap2.appendChild(evTable);
+
+        const container = document.createElement('div');
+        container.appendChild(wrap);
+        container.appendChild(wrap2);
+        return container;
+      }
+
+      /* ===== monte carlo ===== */
+      function sampleUniqueMonths(rng, months, count) {
+        const n = clamp(Math.floor(count), 0, months);
+        const idx = Array.from({ length: months }, (_, i) => i + 1);
+        for (let i = idx.length - 1; i > 0; i--) {
+          const j = Math.floor(rng() * (i + 1));
+          [idx[i], idx[j]] = [idx[j], idx[i]];
+        }
+        return idx.slice(0, n).sort((a, b) => a - b);
+      }
+
+      function simulateRandom(params) {
+        const pool = params.ddPool.length ? params.ddPool : [10];
+        const runsN = clamp(Math.floor(params.runs), 10, 200000);
+
+        const seedFinal =
+          (params.seedStr || 'auto').trim().toLowerCase() === 'auto'
+            ? String(Date.now()) + Math.random()
+            : params.seedStr;
+
+        const seedFn = hashSeed(seedFinal);
+        const rng = mulberry32(seedFn());
+
+        const finalsBalance = [];
+        const finalsProfit = [];
+
+        const prob = clamp((Number(params.probPct) || 0) / 100, 0, 1);
+        const cnt = clamp(
+          Math.floor(Number(params.count) || 0),
+          0,
+          params.months,
+        );
+
+        for (let i = 0; i < runsN; i++) {
+          const events = [];
+          if (params.method === 'count') {
+            const monthsSel = sampleUniqueMonths(rng, params.months, cnt);
+            monthsSel.forEach((m) => {
+              const dd = pool[Math.floor(rng() * pool.length)];
+              events.push({ dd, month: m });
+            });
+          } else {
+            for (let m = 1; m <= params.months; m++) {
+              if (rng() < prob) {
+                const dd = pool[Math.floor(rng() * pool.length)];
+                events.push({ dd, month: m });
+              }
+            }
+          }
+
+          let tl;
+          if (params.simMode === 'monthly') {
+            tl = calcMonthlyTimeline({
+              principal: params.principal,
+              monthlyRate: params.monthlyRate,
+              months: params.months,
+              mode: params.mode,
+              events,
+            });
+          } else {
+            tl = calcTradingDaysTimelineStrict({
+              principal: params.principal,
+              startDate: params.startDate,
+              months: params.months,
+              mode: params.mode,
+              market: params.market,
+              rateMode: params.rateMode,
+              dailyRateDecimal: params.dailyRateDecimal,
+              annualRateDecimal: params.annualRateDecimal,
+              eventsByMonth: buildEventsMapFromSeq(events),
+            });
+            if (!tl.ok) return { ok: false, error: tl.error };
+          }
+
+          finalsBalance.push(tl.balance);
+          finalsProfit.push(tl.profit);
+        }
+
+        finalsBalance.sort((a, b) => a - b);
+        finalsProfit.sort((a, b) => a - b);
+
+        return {
+          ok: true,
+          seedUsed: seedFinal,
+          runs: runsN,
+          balance: {
+            p50: quantile(finalsBalance, 0.5),
+            p90Worst: quantile(finalsBalance, 0.1),
+            min: finalsBalance[0],
+            max: finalsBalance[finalsBalance.length - 1],
+          },
+          profit: {
+            p50: quantile(finalsProfit, 0.5),
+            p90Worst: quantile(finalsProfit, 0.1),
+            min: finalsProfit[0],
+            max: finalsProfit[finalsProfit.length - 1],
+          },
+        };
+      }
+
+      function renderRandomSummary({ base, sim }) {
+        const headers = [t('thMetric'), t('thP50'), t('thP90Worst'), t('thMin'), t('thMax')];
+        const body = [
+          [
+            t('thNetProfit'),
+            fmtCNY(sim.profit.p50),
+            fmtCNY(sim.profit.p90Worst),
+            fmtCNY(sim.profit.min),
+            fmtCNY(sim.profit.max),
+          ],
+          [
+            t('thFinalBalance'),
+            fmtCNY(sim.balance.p50),
+            fmtCNY(sim.balance.p90Worst),
+            fmtCNY(sim.balance.min),
+            fmtCNY(sim.balance.max),
+          ],
+          [
+            getLang() === 'zh' ? '相对无回撤差值（余额）' : 'Delta vs no-DD (balance)',
+            fmtCNY(sim.balance.p50 - base.balance),
+            fmtCNY(sim.balance.p90Worst - base.balance),
+            fmtCNY(sim.balance.min - base.balance),
+            fmtCNY(sim.balance.max - base.balance),
+          ],
+        ];
+        const table = buildTable(headers, body);
+
+        const meta = document.createElement('div');
+        meta.className = 'mini';
+        meta.style.marginTop = '10px';
+        meta.innerHTML =
+          `${t('rndMetaRuns')}<span class="mono">${sim.runs}</span>${t('rndMetaSeed')}<span class="mono">${String(sim.seedUsed).slice(
+            0,
+            48,
+          )}</span>` +
+          `<div class="mini" style="margin-top:4px;color:rgba(255,255,255,.55)">${t('rndExplain')}</div>`;
+
+        const wrap = document.createElement('div');
+        wrap.className = 'table-scroll';
+        wrap.appendChild(table);
+
+        const container = document.createElement('div');
+        container.appendChild(wrap);
+        container.appendChild(meta);
+        return container;
+      }
+
+      /* ===== tooltip (desktop pinned + mobile sheet) ===== */
+      const tipOverlayEl = document.getElementById('tipOverlay');
+      const tipSheetEl = document.getElementById('tipSheet');
+      const tipCloseEl = document.getElementById('tipClose');
+      const tipBodyEl = document.getElementById('tipBody');
+      const tipTitleEl = document.getElementById('tipTitle');
+
+      function openMobileTip(text) {
+        tipTitleEl.textContent = t('tipTitle');
+        tipBodyEl.textContent = text;
+        tipOverlayEl.classList.add('open');
+        tipSheetEl.classList.add('open');
+        tipOverlayEl.setAttribute('aria-hidden', 'false');
+        tipSheetEl.setAttribute('aria-hidden', 'false');
+      }
+      function closeMobileTip() {
+        tipOverlayEl.classList.remove('open');
+        tipSheetEl.classList.remove('open');
+        tipOverlayEl.setAttribute('aria-hidden', 'true');
+        tipSheetEl.setAttribute('aria-hidden', 'true');
+      }
+
+      function initTooltips() {
+        const helps = Array.from(document.querySelectorAll('.help'));
+        helps.forEach((help) => {
+          const row = help.previousElementSibling;
+          if (!row || !row.classList || !row.classList.contains('row')) return;
+          const label = row.querySelector('label');
+          if (!label) return;
+
+          // i18n key stored on help div
+          const i18nKey = help.getAttribute('data-i18n') || '';
+
+          let txt = (help.textContent || '').replace(/\s+/g, ' ').trim();
+          txt = txt.replace(/^说明[:：]?\s*/g, '');
+          if (!txt) {
+            help.remove();
+            return;
+          }
+
+          const q = document.createElement('span');
+          q.className = 'qmark';
+          q.setAttribute('tabindex', '0');
+          q.setAttribute('role', 'button');
+          q.setAttribute('aria-expanded', 'false');
+          q.dataset.tip = txt;
+                   if (i18nKey) q.setAttribute('data-i18n', i18nKey);
+          q.textContent = '?';
+
+          // Append to label
+          label.appendChild(q);
+
+          // Desktop: click to pin/unpin; Mobile: open bottom sheet
+          const onActivate = (ev) => {
+            ev.preventDefault();
+            ev.stopPropagation();
+
+            const text = q.dataset.tip || '';
+            if (isMobileUI()) {
+              openMobileTip(text);
+              return;
+            }
+
+            // toggle pinned
+            const pinned = q.classList.toggle('pinned');
+            q.setAttribute('aria-expanded', pinned ? 'true' : 'false');
+
+            // close other pinned
+            if (pinned) {
+              document.querySelectorAll('.qmark.pinned').forEach((other) => {
+                if (other !== q) {
+                  other.classList.remove('pinned');
+                  other.setAttribute('aria-expanded', 'false');
+                }
+              });
+            }
+          };
+
+          q.addEventListener('click', onActivate);
+          q.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') onActivate(e);
+            if (e.key === 'Escape') {
+              q.classList.remove('pinned');
+              q.setAttribute('aria-expanded', 'false');
+              closeMobileTip();
+            }
+          });
+
+          // remove help text block (tooltip replaces it)
+          help.remove();
+        });
+
+        // click outside closes pinned tooltips (desktop)
+        document.addEventListener('click', () => {
+          if (isMobileUI()) return;
+          document.querySelectorAll('.qmark.pinned').forEach((q) => {
+            q.classList.remove('pinned');
+            q.setAttribute('aria-expanded', 'false');
+          });
+        });
+
+        // Escape closes bottom sheet or pinned tooltips
+        document.addEventListener('keydown', (e) => {
+          if (e.key !== 'Escape') return;
+          closeMobileTip();
+          if (!isMobileUI()) {
+            document.querySelectorAll('.qmark.pinned').forEach((q) => {
+              q.classList.remove('pinned');
+              q.setAttribute('aria-expanded', 'false');
+            });
+          }
+        });
+      }
+
+      tipCloseEl.addEventListener('click', closeMobileTip);
+      tipOverlayEl.addEventListener('click', closeMobileTip);
+
+      /* ===== UI refs ===== */
+      const $ = (id) => document.getElementById(id);
+
+      const nowEl = $('now');
+
+      const simModeEl = $('simMode');
+      const tradingBoxEl = $('tradingBox');
+      const marketEl = $('market');
+      const startDateEl = $('startDate');
+
+      const rateModeEl = $('rateMode');
+      const dailyRateRowEl = $('dailyRateRow');
+      const annualRateRowEl = $('annualRateRow');
+      const dailyRateEl = $('dailyRate');
+      const annualRateEl = $('annualRate');
+
+      const calendarFileEl = $('calendarFile');
+      const calendarStatusEl = $('calendarStatus');
+      const calendarBannerEl = $('calendarBanner');
+
+      const principalEl = $('principal');
+      const monthlyRateRowEl = $('monthlyRateRow');
+      const monthlyRateEl = $('monthlyRate');
+      const durationEl = $('duration');
+      const durationUnitEl = $('durationUnit');
+      const modeEl = $('mode');
+      const showAnnualizedEl = $('showAnnualized');
+
+      const ddEnabledEl = $('ddEnabled');
+      const ddConfigEl = $('ddConfig');
+      const ddModeEl = $('ddMode');
+
+      const singleBoxEl = $('singleBox');
+      const ddListEl = $('ddList');
+      const ddStrategyEl = $('ddStrategy');
+      const ddMonthRowEl = $('ddMonthRow');
+      const ddMonthEl = $('ddMonth');
+
+      const multiBoxEl = $('multiBox');
+      const ddSeqEl = $('ddSeq');
+
+      const randomBoxEl = $('randomBox');
+      const ddPoolEl = $('ddPool');
+      const randMethodEl = $('randMethod');
+      const randProbRowEl = $('randProbRow');
+      const randProbEl = $('randProb');
+      const randCountRowEl = $('randCountRow');
+      const randCountEl = $('randCount');
+      const simRunsEl = $('simRuns');
+      const simSeedEl = $('simSeed');
+
+      const resetBtn = $('resetBtn');
+      const copyBtn = $('copyBtn');
+
+      const detailsEl = $('details');
+      const tableWrapEl = $('tableWrap');
+
+      const finalAmountEl = $('finalAmount');
+      const profitEl = $('profit');
+      const totalReturnEl = $('totalReturn');
+      const annualizedBoxEl = $('annualizedBox');
+      const annualizedEl = $('annualized');
+      const annualizedHintEl = $('annualizedHint');
+
+      const ddBoxEl = $('ddBox');
+      const ddBoxTitleEl = $('ddBoxTitle');
+      const ddBoxHintEl = $('ddBoxHint');
+      const ddOutEl = $('ddOut');
+
+      /* ===== helpers: UI show/hide ===== */
+      function setElShow(el, show) {
+        if (!el) return;
+        el.style.display = show ? '' : 'none';
+      }
+
+      function getMonths() {
+        const dur = Math.max(0, Number(durationEl.value) || 0);
+        const unit = durationUnitEl.value;
+        const months = unit === 'years' ? Math.round(dur * 12) : Math.round(dur);
+        return Math.max(0, months);
+      }
+
+      function getStartDate() {
+        const v = (startDateEl.value || '').trim();
+        if (!v) return null;
+        const d = new Date(v + 'T00:00:00');
+        if (!isFinite(d.getTime())) return null;
+        return d;
+      }
+
+      function updateNow() {
+        nowEl.textContent = formatNow();
+      }
+
+      function updateSimModeUI() {
+        const simMode = simModeEl.value;
+
+        const isTrading = simMode === 'tradingDays';
+        setElShow(tradingBoxEl, isTrading);
+        setElShow(monthlyRateRowEl, !isTrading);
+
+        // If trading-day: ensure start date exists
+        if (isTrading && !startDateEl.value) {
+          startDateEl.value = toISODate(new Date());
+        }
+
+        updateRateModeUI();
+        updateCalendarStatusUI();
+      }
+
+      function updateRateModeUI() {
+        const isTrading = simModeEl.value === 'tradingDays';
+        if (!isTrading) {
+          setElShow(dailyRateRowEl, false);
+          setElShow(annualRateRowEl, false);
+          return;
+        }
+
+        const rm = rateModeEl.value;
+        const isDaily = rm === 'daily';
+        setElShow(dailyRateRowEl, isDaily);
+        setElShow(annualRateRowEl, !isDaily);
+
+        // show/hide help blocks already removed by tooltip init; nothing else
+      }
+
+      function updateDDUI() {
+        const enabled = !!ddEnabledEl.checked;
+        setElShow(ddConfigEl, enabled);
+
+        const mode = ddModeEl.value;
+        setElShow(singleBoxEl, enabled && mode === 'single');
+        setElShow(multiBoxEl, enabled && mode === 'multi');
+        setElShow(randomBoxEl, enabled && mode === 'random');
+
+        const strat = ddStrategyEl.value;
+        setElShow(ddMonthRowEl, enabled && mode === 'single' && strat === 'fixed');
+
+        const rm = randMethodEl.value;
+        setElShow(randProbRowEl, enabled && mode === 'random' && rm === 'prob');
+        setElShow(randCountRowEl, enabled && mode === 'random' && rm === 'count');
+      }
+
+      function updateCalendarStatusUI() {
+        const isTrading = simModeEl.value === 'tradingDays';
+        if (!isTrading) {
+          calendarBannerEl.classList.remove('show');
+          calendarBannerEl.textContent = '';
+          return;
+        }
+
+        const mkt = marketEl.value;
+        const meta = calendars.meta[mkt];
+
+        if (!meta || !meta.count) {
+          calendarStatusEl.textContent = t('calStatusNotImported');
+          calendarBannerEl.classList.add('show');
+          calendarBannerEl.textContent = t('bannerNeedImport');
+          return;
+        }
+
+        // status line
+        const mktName =
+          mkt === 'CN' ? t('calImportedCN') : t('calImportedUS');
+        calendarStatusEl.textContent =
+          `${t('calImportedPrefix')} ${mktName} ${t('calImportedMid')} ` +
+          `${meta.count} ${t('calImportedSuffix')} ` +
+          (meta.min && meta.max ? `（${meta.min} ~ ${meta.max}）` : '');
+
+        // banner: only show when coverage insufficient for current settings
+        const start = getStartDate();
+        const months = getMonths();
+        if (!start || months <= 0) {
+          calendarBannerEl.classList.remove('show');
+          calendarBannerEl.textContent = '';
+          return;
+        }
+        const endEx = addMonths(start, months);
+        const cover = calendarCoversRange(mkt, toISODate(start), toISODate(endEx));
+        if (!cover.ok) {
+          calendarBannerEl.classList.add('show');
+          calendarBannerEl.textContent =
+            `${t('calCoverNotEnoughPrefix')}${cover.reason}${t('calCoverNeed')}` +
+            `${toISODate(start)} ~ ${toISODate(new Date(endEx.getTime() - 86400000))}`;
+        } else {
+          calendarBannerEl.classList.remove('show');
+          calendarBannerEl.textContent = '';
+        }
+      }
+
+      /* ===== read inputs & compute ===== */
+      function readParams() {
+        const simMode = simModeEl.value;
+        const principal = Math.max(0, Number(principalEl.value) || 0);
+
+        const months = getMonths();
+        const mode = modeEl.value;
+
+        const monthlyRate = (Number(monthlyRateEl.value) || 0) / 100;
+
+        const market = marketEl.value;
+        const startDate = getStartDate();
+
+        const rateMode = rateModeEl.value;
+        const dailyRateDecimal = (Number(dailyRateEl.value) || 0) / 100;
+        const annualRateDecimal = (Number(annualRateEl.value) || 0) / 100;
+
+        const showAnnual = !!showAnnualizedEl.checked;
+
+        // drawdown
+        const ddEnabled = !!ddEnabledEl.checked;
+        const ddMode = ddModeEl.value;
+
+        return {
+          simMode,
+          principal,
+          months,
+          mode,
+          monthlyRate,
+          market,
+          startDate,
+          rateMode,
+          dailyRateDecimal,
+          annualRateDecimal,
+          showAnnual,
+          ddEnabled,
+          ddMode,
+        };
+      }
+
+      function ensureTradingInputsValid(p) {
+        if (p.simMode !== 'tradingDays') return { ok: true };
+        if (!p.startDate) {
+          return {
+            ok: false,
+            error: (getLang() === 'zh' ? '请填写开始日期。' : 'Please set a start date.'),
+          };
+        }
+        if (p.months <= 0) {
+          return {
+            ok: false,
+            error:
+              (getLang() === 'zh'
+                ? '投资时长必须大于 0。'
+                : 'Duration must be greater than 0.'),
+          };
+        }
+        const meta = calendars.meta[p.market];
+        if (!meta || !meta.count) {
+          return {
+            ok: false,
+            error: t('errNeedCalendarHint'),
+          };
+        }
+        // coverage checked inside calcTradingDaysTimelineStrict
+        return { ok: true };
+      }
+
+      function renderBaseAndTable(base, params, extra) {
+        // KPIs
+        finalAmountEl.textContent = fmtCNY(base.balance);
+        profitEl.textContent = fmtCNY(base.profit);
+        profitEl.className = 'val ' + (base.profit >= 0 ? 'good' : 'bad');
+        totalReturnEl.textContent = fmtPct(base.totalReturn);
+        totalReturnEl.className = 'val ' + (base.totalReturn >= 0 ? 'good' : 'bad');
+
+        // annualized
+        if (params.showAnnual) {
+          annualizedBoxEl.style.display = '';
+          annualizedEl.textContent = fmtPct(base.annualized);
+          annualizedEl.className = 'val ' + (base.annualized >= 0 ? 'good' : 'bad');
+
+          if (params.simMode === 'monthly') {
+            annualizedHintEl.textContent = t('annualHintMonthly');
+          } else {
+            annualizedHintEl.textContent = t('annualHintTradingTpl', {
+              start: extra.startISO,
+              end: toISODate(new Date(new Date(extra.endISO + 'T00:00:00').getTime() - 86400000)),
+              td: String(extra.tradingDays || 0),
+            });
+          }
+        } else {
+          annualizedBoxEl.style.display = 'none';
+        }
+
+        // details table
+        tableWrapEl.innerHTML = '';
+        const table = renderMonthlyTable(base.rows);
+        tableWrapEl.appendChild(table);
+      }
+
+      function clearOutputsWithError(msg) {
+        finalAmountEl.textContent = '-';
+        profitEl.textContent = '-';
+        totalReturnEl.textContent = '-';
+        annualizedBoxEl.style.display = 'none';
+
+        ddBoxEl.style.display = 'none';
+        ddOutEl.innerHTML = '';
+        ddBoxHintEl.textContent = '-';
+
+        tableWrapEl.innerHTML = '';
+        const soft = document.createElement('div');
+        soft.className = 'soft';
+        soft.textContent = msg || (getLang() === 'zh' ? '无法计算。' : 'Cannot compute.');
+        tableWrapEl.appendChild(soft);
+      }
+
+      function updateDDBoxTitles(mode) {
+        if (mode === 'single') {
+          ddBoxTitleEl.textContent = t('ddTitleSingle');
+          ddBoxHintEl.textContent = t('ddHintSingle');
+        } else if (mode === 'multi') {
+          ddBoxTitleEl.textContent = t('ddTitleMulti');
+          ddBoxHintEl.textContent = t('ddHintMulti');
+        } else {
+          ddBoxTitleEl.textContent = t('ddTitleRandom');
+          ddBoxHintEl.textContent = t('ddHintRandom');
+        }
+      }
+
+      function computeAndRender() {
+        const params = readParams();
+
+        // always keep UI states consistent
+        updateCalendarStatusUI();
+
+        // baseline first
+        let base;
+        if (params.simMode === 'monthly') {
+          base = calcMonthlyTimeline({
+            principal: params.principal,
+            monthlyRate: params.monthlyRate,
+            months: params.months,
+            mode: params.mode,
+            events: [],
+          });
+          renderBaseAndTable(base, params, { startISO: '-', endISO: '-', tradingDays: 0 });
+        } else {
+          const v = ensureTradingInputsValid(params);
+          if (!v.ok) {
+            clearOutputsWithError(v.error);
+            return;
+          }
+
+          const tl = calcTradingDaysTimelineStrict({
+            principal: params.principal,
+            startDate: params.startDate,
+            months: params.months,
+            mode: params.mode,
+            market: params.market,
+            rateMode: params.rateMode,
+            dailyRateDecimal: params.dailyRateDecimal,
+            annualRateDecimal: params.annualRateDecimal,
+            eventsByMonth: new Map(),
+          });
+
+          if (!tl.ok) {
+            clearOutputsWithError(tl.error);
+            return;
+          }
+
+          base = tl;
+          renderBaseAndTable(base, params, tl.extra || {});
+        }
+
+        // drawdown
+        if (!params.ddEnabled) {
+          ddBoxEl.style.display = 'none';
+          ddOutEl.innerHTML = '';
+          return;
+        }
+
+        ddBoxEl.style.display = '';
+        ddOutEl.innerHTML = '';
+        updateDDBoxTitles(params.ddMode);
+
+        if (params.ddMode === 'single') {
+          const list = parsePctList(ddListEl.value);
+          const ddPctList = list.length ? list : [10];
+
+          const strategy = ddStrategyEl.value;
+          const fixedMonth = clamp(Math.floor(Number(ddMonthEl.value) || 1), 1, Math.max(1, params.months));
+
+          const results = [];
+          for (const dd of ddPctList) {
+            if (strategy === 'worst') {
+              const r = calcWorstSingle({
+                ...params,
+                drawdownPct: dd,
+                drawdownMonth: 1,
+              });
+              if (!r.ok) {
+                ddOutEl.textContent = r.error || '-';
+                return;
+              }
+              results.push(r);
+            } else {
+              const r = calcSingleDrawdown({
+                ...params,
+                drawdownPct: dd,
+                drawdownMonth: fixedMonth,
+              });
+              if (!r.ok) {
+                ddOutEl.textContent = r.error || '-';
+                return;
+              }
+              results.push(r);
+            }
+          }
+
+          // baseline is already computed
+          const table = renderSingleDdTable({
+            base,
+            results,
+            strategy,
+          });
+          const wrap = document.createElement('div');
+          wrap.className = 'table-scroll';
+          wrap.appendChild(table);
+          ddOutEl.appendChild(wrap);
+          return;
+        }
+
+        if (params.ddMode === 'multi') {
+          const seq = parseSeq(ddSeqEl.value);
+          const eventsByMonth = buildEventsMapFromSeq(seq);
+
+          let tl;
+          if (params.simMode === 'monthly') {
+            tl = calcMonthlyTimeline({
+              principal: params.principal,
+              monthlyRate: params.monthlyRate,
+              months: params.months,
+              mode: params.mode,
+              events: seq,
+            });
+          } else {
+            const v = ensureTradingInputsValid(params);
+            if (!v.ok) {
+              ddOutEl.textContent = v.error || '-';
+              return;
+            }
+            tl = calcTradingDaysTimelineStrict({
+              principal: params.principal,
+              startDate: params.startDate,
+              months: params.months,
+              mode: params.mode,
+              market: params.market,
+              rateMode: params.rateMode,
+              dailyRateDecimal: params.dailyRateDecimal,
+              annualRateDecimal: params.annualRateDecimal,
+              eventsByMonth,
+            });
+            if (!tl.ok) {
+              ddOutEl.textContent = tl.error || '-';
+              return;
+            }
+          }
+
+          const container = renderMultiSummary({ base, tl, events: seq });
+          ddOutEl.appendChild(container);
+          return;
+        }
+
+        // random
+        const pool = parsePctList(ddPoolEl.value);
+        const runs = Math.max(10, Math.floor(Number(simRunsEl.value) || 2000));
+        const seedStr = (simSeedEl.value || '').trim() || 'auto';
+        const method = randMethodEl.value;
+        const probPct = Number(randProbEl.value) || 0;
+        const count = Number(randCountEl.value) || 0;
+
+        const sim = simulateRandom({
+          ...params,
+          ddPool: pool.length ? pool : [10],
+          runs,
+          seedStr,
+          method,
+          probPct,
+          count,
+        });
+        if (!sim.ok) {
+          ddOutEl.textContent = sim.error || '-';
+          return;
+        }
+
+        const container = renderRandomSummary({ base, sim });
+        ddOutEl.appendChild(container);
+      }
+
+      /* ===== copy result ===== */
+      function pad2(n) {
+        return String(n).padStart(2, '0');
+      }
+
+      function buildCopyText() {
+        const params = readParams();
+
+        let startISO = '-';
+        let endISO = '-';
+        let td = 0;
+
+        let base;
+        if (params.simMode === 'monthly') {
+          base = calcMonthlyTimeline({
+            principal: params.principal,
+            monthlyRate: params.monthlyRate,
+            months: params.months,
+            mode: params.mode,
+            events: [],
+          });
+        } else {
+          const v = ensureTradingInputsValid(params);
+          if (!v.ok) return v.error;
+
+          const tl = calcTradingDaysTimelineStrict({
+            principal: params.principal,
+            startDate: params.startDate,
+            months: params.months,
+            mode: params.mode,
+            market: params.market,
+            rateMode: params.rateMode,
+            dailyRateDecimal: params.dailyRateDecimal,
+            annualRateDecimal: params.annualRateDecimal,
+            eventsByMonth: new Map(),
+          });
+          if (!tl.ok) return tl.error;
+
+          base = tl;
+          startISO = tl.extra.startISO;
+          // endExclusive ISO; show end-1 day
+          const endExclusive = new Date(tl.extra.endISO + 'T00:00:00');
+          endExclusive.setDate(endExclusive.getDate() - 1);
+          endISO = toISODate(endExclusive);
+          td = tl.extra.tradingDays || 0;
+        }
+
+        const lines = [];
+        if (params.simMode === 'monthly') {
+          lines.push(
+            t('copySimMonthlyTpl', { mr: (params.monthlyRate * 100).toFixed(2) }),
+          );
+        } else {
+          const mktName = params.market === 'CN' ? t('mktCN') : t('mktUS');
+          lines.push(
+            t('copySimTradingTpl', {
+              mkt: mktName,
+              start: startISO,
+              end: endISO,
+              td: String(td),
+            }),
+          );
+          if (params.rateMode === 'daily') {
+            lines.push(
+              t('copyDailyRateTpl', {
+                dr: (params.dailyRateDecimal * 100).toFixed(4),
+              }),
+            );
+          } else {
+            lines.push(
+              t('copyAnnualRateTpl', {
+                ar: (params.annualRateDecimal * 100).toFixed(2),
+              }),
+            );
+          }
+        }
+
+        lines.push(t('copyPrincipalTpl', { p: String(params.principal) }));
+        lines.push(t('copyDurationTpl', { m: String(params.months) }));
+        lines.push(params.mode === 'compound' ? t('copyModeCompound') : t('copyModeSimple'));
+        lines.push('');
+        lines.push(t('copyTotalTpl', { v: fmtCNY(base.balance) }));
+        lines.push(t('copyProfitTpl', { v: fmtCNY(base.profit) }));
+        lines.push(t('copyTotalReturnTpl', { v: fmtPct(base.totalReturn) }));
+        if (params.showAnnual) lines.push(t('copyAnnualizedTpl', { v: fmtPct(base.annualized) }));
+
+        return lines.join('\n');
+      }
+
+      async function copyToClipboard(text) {
+        try {
+          await navigator.clipboard.writeText(text);
+          return true;
+        } catch (e) {
+          return false;
+        }
+      }
+
+      /* ===== reset ===== */
+      function resetToDemo() {
+        simModeEl.value = 'monthly';
+        marketEl.value = 'CN';
+        startDateEl.value = '';
+
+        rateModeEl.value = 'daily';
+        dailyRateEl.value = '0.1';
+        annualRateEl.value = '15';
+
+        principalEl.value = '300000';
+        monthlyRateEl.value = '2';
+        durationEl.value = '12';
+        durationUnitEl.value = 'months';
+        modeEl.value = 'compound';
+        showAnnualizedEl.checked = true;
+
+        ddEnabledEl.checked = true;
+        ddModeEl.value = 'single';
+        ddListEl.value = '5,10,20,30';
+        ddStrategyEl.value = 'worst';
+        ddMonthEl.value = '6';
+
+        ddSeqEl.value = '10@6, 20@18';
+
+        ddPoolEl.value = '5,10,20,30';
+        randMethodEl.value = 'prob';
+        randProbEl.value = '2';
+        randCountEl.value = '6';
+        simRunsEl.value = '2000';
+        simSeedEl.value = 'auto';
+
+        updateSimModeUI();
+        updateDDUI();
+        computeAndRender();
+      }
+
+      /* ===== bindings ===== */
+      function bindAll() {
+        // i18n
+        const saved = (() => {
+          try {
+            return localStorage.getItem('i18n_lang');
+          } catch (e) {
+            return null;
+          }
+        })();
+        setLang(saved === 'en' ? 'en' : 'zh');
+
+        $('langBtn').addEventListener('click', () => {
+          toggleLang();
+          // reflect language on dynamic UI bits
+          updateCalendarStatusUI();
+          computeAndRender();
+        });
+
+        // clock
+        updateNow();
+        setInterval(updateNow, 1000);
+
+        // sim mode changes
+        simModeEl.addEventListener('change', () => {
+          updateSimModeUI();
+          computeAndRender();
+        });
+        marketEl.addEventListener('change', () => {
+          updateCalendarStatusUI();
+          computeAndRender();
+        });
+        startDateEl.addEventListener('input', () => {
+          updateCalendarStatusUI();
+          computeAndRender();
+        });
+
+        rateModeEl.addEventListener('change', () => {
+          updateRateModeUI();
+          computeAndRender();
+        });
+
+        // all inputs: live update
+        [
+          principalEl,
+          monthlyRateEl,
+          durationEl,
+          durationUnitEl,
+          modeEl,
+          showAnnualizedEl,
+          dailyRateEl,
+          annualRateEl,
+          ddEnabledEl,
+          ddModeEl,
+          ddListEl,
+          ddStrategyEl,
+          ddMonthEl,
+          ddSeqEl,
+          ddPoolEl,
+          randMethodEl,
+          randProbEl,
+          randCountEl,
+          simRunsEl,
+          simSeedEl,
+        ].forEach((el) => {
+          if (!el) return;
+          el.addEventListener('input', () => {
+            updateDDUI();
+            updateCalendarStatusUI();
+            computeAndRender();
+          });
+          el.addEventListener('change', () => {
+            updateDDUI();
+            updateCalendarStatusUI();
+            computeAndRender();
+          });
+        });
+
+        ddStrategyEl.addEventListener('change', () => {
+          updateDDUI();
+          computeAndRender();
+        });
+        randMethodEl.addEventListener('change', () => {
+          updateDDUI();
+          computeAndRender();
+        });
+        ddEnabledEl.addEventListener('change', () => {
+          updateDDUI();
+          computeAndRender();
+        });
+        ddModeEl.addEventListener('change', () => {
+          updateDDUI();
+          computeAndRender();
+        });
+
+        resetBtn.addEventListener('click', () => {
+          resetToDemo();
+        });
+
+        copyBtn.addEventListener('click', async () => {
+          const text = buildCopyText();
+          const ok = await copyToClipboard(text);
+          if (ok) {
+            copyBtn.textContent = t('copyBtnCopied');
+            setTimeout(() => {
+              copyBtn.textContent = t('copyBtnDefault');
+            }, 900);
+          } else {
+            alert(t('copyFail'));
+          }
+        });
+
+        // calendar import
+        calendarFileEl.addEventListener('change', async () => {
+          const file = calendarFileEl.files && calendarFileEl.files[0];
+          if (!file) return;
+          try {
+            const raw = await file.text();
+            const res = parseCalendarJSON(raw, marketEl.value);
+            if (!res.ok) {
+              alert(res.error || t('alertCalReadFail'));
+              updateCalendarStatusUI();
+              computeAndRender();
+              return;
+            }
+            updateCalendarStatusUI();
+            computeAndRender();
+          } catch (e) {
+            alert(t('alertCalReadFail'));
+          } finally {
+            // allow re-import same file
+            calendarFileEl.value = '';
+          }
+        });
+      }
+
+      /* ===== boot ===== */
+      (function boot() {
+        // tooltips: replace .help with ? bubbles
+        initTooltips();
+
+        // i18n apply after tooltip replacement
+        try {
+          const saved = localStorage.getItem('i18n_lang');
+          I18N.lang = saved === 'en' ? 'en' : 'zh';
+        } catch (e) {
+          I18N.lang = 'zh';
+        }
+        applyLangToDOM();
+
+        // initialize UI
+        updateSimModeUI();
+        updateDDUI();
+        updateCalendarStatusUI();
+
+        // bind events
+        bindAll();
+
+        // first compute
+        computeAndRender();
+      })();
+    </script>
+  </body>
+</html>
+
+
+
