@@ -1,0 +1,23 @@
+# Node / package managers
+node_modules/
+.pnpm-store/
+
+# Next.js
+.next/
+out/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+
+# Vercel
+.vercel/
+
+# IDE
+.idea/
+.vscode/
+
+# Tests
+coverage/
