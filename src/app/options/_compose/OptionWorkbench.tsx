@@ -1,136 +1,257 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 
 import {
   buildPayoffSeries,
-  calcBreakeven,
-  calcPayoffAtExpiry,
-  calcRiskProfile,
-  OptionParams,
-  OptionSide,
-  OptionType,
+  calcStrategyPayoffAtExpiry,
+  estimateRangeRisk,
+  findBreakevens,
+  STRATEGIES,
+  type StrategyTemplate,
 } from "@/app/options/_domain/payoff";
 import { OptionPayoffChart } from "@/app/options/_components/OptionPayoffChart";
+import { StrategyCard } from "@/app/options/_components/StrategyCard";
+import { buildWorkbookBlob, downloadBlob } from "@/app/_domain/export";
+import { useExportActions } from "@/app/_hooks/useExportActions";
 
-function fmt(n: number) {
-  if (!isFinite(n)) return "∞";
-  return new Intl.NumberFormat("zh-CN", { style: "currency", currency: "USD", maximumFractionDigits: 2 }).format(n);
+function fmtUSD(v: number) {
+  if (!isFinite(v)) return "∞";
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 2,
+  }).format(v);
+}
+
+function cloneStrategies(): StrategyTemplate[] {
+  return STRATEGIES.map((s) => ({
+    ...s,
+    legs: s.legs.map((leg) => ({ ...leg })),
+    stock: s.stock ? { ...s.stock } : undefined,
+  }));
 }
 
 export function OptionWorkbench() {
-  const [params, setParams] = useState<OptionParams>({
-    optionType: "call",
-    side: "long",
-    spot: 100,
-    strike: 105,
-    premium: 3.2,
-    contracts: 1,
+  const [expiryPrice, setExpiryPrice] = useState(100);
+  const [centerPrice, setCenterPrice] = useState(100);
+  const [strategies, setStrategies] = useState<StrategyTemplate[]>(() => cloneStrategies());
+  const [activeId, setActiveId] = useState(strategies[0]?.id || "");
+  const chartRef = useRef<HTMLDivElement | null>(null);
+
+  const analyses = useMemo(() => {
+    return strategies.map((strategy) => {
+      const series = buildPayoffSeries(strategy, centerPrice || 100);
+      const pnl = calcStrategyPayoffAtExpiry(strategy, expiryPrice || 0);
+      const breakevens = findBreakevens(series);
+      const risk = estimateRangeRisk(series);
+      return { strategy, series, pnl, breakevens, risk };
+    });
+  }, [centerPrice, expiryPrice, strategies]);
+
+  const active = analyses.find((item) => item.strategy.id === activeId) || analyses[0];
+
+  const exportCsv = () => {
+    const rows = analyses.map((item) => ({
+      strategy: item.strategy.name,
+      outlook: item.strategy.outlook,
+      expiry_price: expiryPrice,
+      pnl: item.pnl,
+      breakevens: item.breakevens.join(" / "),
+      max_profit_in_range: item.risk.maxProfit,
+      max_loss_in_range: item.risk.maxLoss,
+      legs: item.strategy.legs
+        .map((leg) => `${leg.label} ${leg.optionType.toUpperCase()} ${leg.side.toUpperCase()} K=${leg.strike} P=${leg.premium} Q=${leg.qty}`)
+        .join(" ; "),
+    }));
+
+    const blob = buildWorkbookBlob([{ name: "options_strategies", rows }]);
+    downloadBlob(`options-strategies-${Date.now()}.csv`, blob);
+  };
+
+  const summaryLines = () => {
+    if (!active) return ["No active strategy"];
+    return [
+      `Strategy: ${active.strategy.name}`,
+      `Expiry Price: ${expiryPrice}`,
+      `P/L at expiry: ${fmtUSD(active.pnl)}`,
+      `Breakeven(s): ${active.breakevens.length ? active.breakevens.join(" / ") : "N/A"}`,
+      `Max Profit (range): ${fmtUSD(active.risk.maxProfit)}`,
+      `Max Loss (range): ${fmtUSD(active.risk.maxLoss)}`,
+      `Legs: ${active.strategy.legs
+        .map((leg) => `${leg.label} ${leg.optionType.toUpperCase()} ${leg.side.toUpperCase()} K=${leg.strike} P=${leg.premium} Q=${leg.qty}`)
+        .join(" | ")}`,
+    ];
+  };
+
+  const { exportCsv: handleExportCsv, exportPdf: handleExportPdf } = useExportActions({
+    chartRef,
+    onExportCsv: exportCsv,
+    title: `options-${active?.strategy.id || "strategy"}`,
+    getSummaryLines: summaryLines,
   });
 
-  const [expiryPrice, setExpiryPrice] = useState(110);
+  const updateLeg = (strategyId: string, legIndex: number, key: "strike" | "premium" | "qty", value: number) => {
+    setStrategies((prev) =>
+      prev.map((strategy) => {
+        if (strategy.id !== strategyId) return strategy;
+        const nextLegs = strategy.legs.map((leg, idx) => {
+          if (idx !== legIndex) return leg;
+          const safe = key === "qty" ? Math.max(1, Math.round(value || 1)) : Number(value) || 0;
+          return { ...leg, [key]: safe };
+        });
+        return { ...strategy, legs: nextLegs };
+      })
+    );
+  };
 
-  const series = useMemo(() => buildPayoffSeries(params), [params]);
-  const breakeven = useMemo(() => calcBreakeven(params), [params]);
-  const pnlNow = useMemo(() => calcPayoffAtExpiry(params, expiryPrice), [params, expiryPrice]);
-  const risk = useMemo(() => calcRiskProfile(params), [params]);
+  const updateStock = (strategyId: string, key: "shares" | "entry", value: number) => {
+    setStrategies((prev) =>
+      prev.map((strategy) => {
+        if (strategy.id !== strategyId || !strategy.stock) return strategy;
+        if (key === "shares") {
+          return { ...strategy, stock: { ...strategy.stock, shares: Math.max(1, Math.round(value || 1)) } };
+        }
+        return { ...strategy, stock: { ...strategy.stock, entry: Number(value) || 0 } };
+      })
+    );
+  };
 
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-10">
       <Card className="overflow-hidden">
         <CardHeader>
-          <div className="flex items-center justify-between gap-2">
-            <CardTitle className="text-2xl">美股期权到期盈亏（单腿）</CardTitle>
-            <Badge variant="secondary">新页面</Badge>
-          </div>
-          <p className="text-sm text-muted-foreground">支持 Call/Put + 买方/卖方，按到期日价格计算盈亏。</p>
+          <CardTitle className="text-2xl">期权策略收益/亏损总览（到期）</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            同页展示主流策略的小卡片，点击任意策略可查看到期盈亏曲线与腿结构。
+          </p>
         </CardHeader>
-        <CardContent className="grid gap-6">
-          <div className="grid gap-4 md:grid-cols-3">
-            <Field label="类型">
-              <Select
-                value={params.optionType}
-                onValueChange={(value) => setParams((s) => ({ ...s, optionType: value as OptionType }))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="call">Call</SelectItem>
-                  <SelectItem value="put">Put</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
-
-            <Field label="方向">
-              <Select value={params.side} onValueChange={(value) => setParams((s) => ({ ...s, side: value as OptionSide }))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="long">买方 (Long)</SelectItem>
-                  <SelectItem value="short">卖方 (Short)</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
-
-            <Field label="合约张数">
-              <Input
-                type="number"
-                min="1"
-                step="1"
-                value={params.contracts}
-                onChange={(e) => setParams((s) => ({ ...s, contracts: Math.max(1, Number(e.target.value) || 1) }))}
-              />
-            </Field>
-
-            <Field label="标的现价 (USD)">
-              <Input
-                type="number"
-                step="0.01"
-                value={params.spot}
-                onChange={(e) => setParams((s) => ({ ...s, spot: Number(e.target.value) || 0 }))}
-              />
-            </Field>
-
-            <Field label="行权价 Strike (USD)">
-              <Input
-                type="number"
-                step="0.01"
-                value={params.strike}
-                onChange={(e) => setParams((s) => ({ ...s, strike: Number(e.target.value) || 0 }))}
-              />
-            </Field>
-
-            <Field label="权利金 Premium (USD)">
-              <Input
-                type="number"
-                step="0.01"
-                value={params.premium}
-                onChange={(e) => setParams((s) => ({ ...s, premium: Number(e.target.value) || 0 }))}
-              />
-            </Field>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-4">
-            <Kpi title="到期盈亏（按下方价格）" value={fmt(pnlNow)} tone={pnlNow >= 0 ? "good" : "bad"} />
-            <Kpi title="盈亏平衡点" value={breakeven.toFixed(2)} />
-            <Kpi title="最大盈利" value={fmt(risk.maxProfit)} />
-            <Kpi title="最大亏损" value={fmt(risk.maxLoss)} />
-          </div>
-
-          <Field label="假设到期价 (USD)">
-            <Input type="number" step="0.01" value={expiryPrice} onChange={(e) => setExpiryPrice(Number(e.target.value) || 0)} />
+        <CardContent className="grid gap-4 md:grid-cols-2">
+          <Field label="假设到期价 S (USD)">
+            <Input
+              type="number"
+              step="0.01"
+              value={expiryPrice}
+              onChange={(e) => setExpiryPrice(Number(e.target.value) || 0)}
+            />
           </Field>
-
-          <OptionPayoffChart data={series} breakeven={breakeven} />
+          <Field label="曲线中心价 (USD)">
+            <Input
+              type="number"
+              step="0.01"
+              value={centerPrice}
+              onChange={(e) => setCenterPrice(Number(e.target.value) || 100)}
+            />
+          </Field>
         </CardContent>
       </Card>
+
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {analyses.map((item) => (
+          <StrategyCard
+            key={item.strategy.id}
+            strategy={item.strategy}
+            pnl={item.pnl}
+            breakevens={item.breakevens}
+            maxProfit={item.risk.maxProfit}
+            maxLoss={item.risk.maxLoss}
+            active={item.strategy.id === active?.strategy.id}
+            onSelect={() => setActiveId(item.strategy.id)}
+          />
+        ))}
+      </section>
+
+      {active ? (
+        <Card className="overflow-hidden">
+          <CardHeader>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <CardTitle className="text-xl">{active.strategy.name} 详情</CardTitle>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={handleExportCsv}>
+                  导出 CSV
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleExportPdf}>
+                  导出 PDF
+                </Button>
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground">{active.strategy.description}</p>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <div className="grid gap-3 md:grid-cols-3">
+              <Kpi title="到期盈亏" value={fmtUSD(active.pnl)} tone={active.pnl >= 0 ? "good" : "bad"} />
+              <Kpi title="盈亏平衡点" value={active.breakevens.length ? active.breakevens.join(" / ") : "无"} />
+              <Kpi title="理论风险说明" value={`${active.strategy.maxProfitHint} / ${active.strategy.maxLossHint}`} />
+            </div>
+
+            <OptionPayoffChart data={active.series} breakevens={active.breakevens} chartRef={chartRef} />
+
+            <div className="rounded-xl border border-border/60 bg-background/70 p-4 text-sm">
+              <div className="mb-2 font-medium">腿结构（可编辑）</div>
+              <div className="grid gap-3 text-xs">
+                {active.strategy.stock ? (
+                  <div className="grid gap-2 rounded-md bg-muted/60 p-3 md:grid-cols-2">
+                    <Field label="Stock shares">
+                      <Input
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={active.strategy.stock.shares}
+                        onChange={(e) => updateStock(active.strategy.id, "shares", Number(e.target.value))}
+                      />
+                    </Field>
+                    <Field label="Stock entry">
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={active.strategy.stock.entry}
+                        onChange={(e) => updateStock(active.strategy.id, "entry", Number(e.target.value))}
+                      />
+                    </Field>
+                  </div>
+                ) : null}
+
+                {active.strategy.legs.map((leg, idx) => (
+                  <div key={`${active.strategy.id}-${idx}`} className="grid gap-2 rounded-md bg-muted/60 p-3 md:grid-cols-6">
+                    <div className="md:col-span-2">
+                      {leg.label} | {leg.optionType.toUpperCase()} | {leg.side.toUpperCase()}
+                    </div>
+                    <Field label="Strike">
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={leg.strike}
+                        onChange={(e) => updateLeg(active.strategy.id, idx, "strike", Number(e.target.value))}
+                      />
+                    </Field>
+                    <Field label="Premium">
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={leg.premium}
+                        onChange={(e) => updateLeg(active.strategy.id, idx, "premium", Number(e.target.value))}
+                      />
+                    </Field>
+                    <Field label="Qty">
+                      <Input
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={leg.qty}
+                        onChange={(e) => updateLeg(active.strategy.id, idx, "qty", Number(e.target.value))}
+                      />
+                    </Field>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ) : null}
     </main>
   );
 }
@@ -148,7 +269,7 @@ function Kpi({ title, value, tone }: { title: string; value: string; tone?: "goo
   return (
     <div className="rounded-xl border border-border/60 bg-background/70 p-4">
       <div className="text-xs text-muted-foreground">{title}</div>
-      <div className={`mt-1 text-xl font-semibold ${tone === "good" ? "text-emerald-500" : tone === "bad" ? "text-rose-500" : ""}`}>
+      <div className={`mt-1 text-lg font-semibold ${tone === "good" ? "text-emerald-500" : tone === "bad" ? "text-rose-500" : ""}`}>
         {value}
       </div>
     </div>
