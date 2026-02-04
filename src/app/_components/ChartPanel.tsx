@@ -7,13 +7,32 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import type { RefObject } from "react";
 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { fmtCNY } from "@/lib/utils";
+import { fmtMoney } from "@/lib/utils";
 
-export function ChartPanel({ chartData, chartMode, onChangeMode, lang, t }: any) {
+export function ChartPanel({
+  chartData,
+  chartMode,
+  onChangeMode,
+  lang,
+  t,
+  currency,
+  snapshotData,
+  chartRef,
+}: {
+  chartData: Array<{ month: number; balance: number; profit: number; gain: number }>;
+  chartMode: string;
+  onChangeMode: (value: string) => void;
+  lang: "zh" | "en";
+  t: (key: string, vars?: Record<string, string | number>) => string;
+  currency: "USD" | "CNY";
+  snapshotData?: Array<{ month: number; balance: number; profit: number; gain: number }>;
+  chartRef?: RefObject<HTMLDivElement | null>;
+}) {
   return (
-    <div className="rounded-xl border border-border/60 bg-background/70 p-4">
+    <div className="rounded-xl border border-border/60 bg-background/70 p-4" ref={chartRef}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <div className="text-sm font-semibold">{t("chartTitle")}</div>
@@ -36,7 +55,7 @@ export function ChartPanel({ chartData, chartMode, onChangeMode, lang, t }: any)
             <YAxis
               tickLine={false}
               axisLine={false}
-              tickFormatter={(value) => fmtCNY(lang, value).replace(/[^\d.-]/g, "")}
+              tickFormatter={(value) => fmtMoney(lang, currency, value).replace(/[^\d.-]/g, "")}
             />
             <RechartsTooltip
               formatter={(value, name) => {
@@ -48,7 +67,7 @@ export function ChartPanel({ chartData, chartMode, onChangeMode, lang, t }: any)
                     : name === "gain"
                     ? t("chartGain")
                     : name;
-                return [fmtCNY(lang, value), label];
+                return [fmtMoney(lang, currency, value), label];
               }}
               labelFormatter={(label) => `${t("thMonth")} ${label}`}
             />
@@ -60,6 +79,46 @@ export function ChartPanel({ chartData, chartMode, onChangeMode, lang, t }: any)
             )}
             {chartMode === "gain" && (
               <Line type="monotone" dataKey="gain" stroke="#a855f7" strokeWidth={2} dot={false} />
+            )}
+            {!!snapshotData?.length && (
+              <>
+                {(chartMode === "balance_profit" || chartMode === "balance") && (
+                  <Line
+                    type="monotone"
+                    data={snapshotData}
+                    dataKey="balance"
+                    stroke="#10b981"
+                    strokeWidth={1.5}
+                    dot={false}
+                    strokeDasharray="6 4"
+                    name={lang === "zh" ? "快照余额" : "Snapshot Balance"}
+                  />
+                )}
+                {(chartMode === "balance_profit" || chartMode === "profit") && (
+                  <Line
+                    type="monotone"
+                    data={snapshotData}
+                    dataKey="profit"
+                    stroke="#0ea5e9"
+                    strokeWidth={1.5}
+                    dot={false}
+                    strokeDasharray="6 4"
+                    name={lang === "zh" ? "快照净收益" : "Snapshot Profit"}
+                  />
+                )}
+                {chartMode === "gain" && (
+                  <Line
+                    type="monotone"
+                    data={snapshotData}
+                    dataKey="gain"
+                    stroke="#a855f7"
+                    strokeWidth={1.5}
+                    dot={false}
+                    strokeDasharray="6 4"
+                    name={lang === "zh" ? "快照当月收益" : "Snapshot Gain"}
+                  />
+                )}
+              </>
             )}
           </LineChart>
         </ResponsiveContainer>

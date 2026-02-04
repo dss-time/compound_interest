@@ -79,6 +79,26 @@ export function fmtCNY(lang, n) {
   }).format(value);
 }
 
+export function fmtMoney(lang, currency, n) {
+  const value = Decimal.isDecimal(n) ? n.toNumber() : n;
+  if (!isFinite(value)) return "-";
+  return new Intl.NumberFormat(lang === "zh" ? "zh-CN" : "en-US", {
+    style: "currency",
+    currency: currency || "CNY",
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
+export function convertByCurrency(value, currency, fxRate) {
+  const numeric = Number(value);
+  const fx = Number(fxRate) || 1;
+  if (!isFinite(numeric)) return { primary: NaN, secondary: NaN, secondaryCurrency: currency === "USD" ? "CNY" : "USD" };
+  if (currency === "USD") {
+    return { primary: numeric, secondary: numeric * fx, secondaryCurrency: "CNY" };
+  }
+  return { primary: numeric, secondary: numeric / fx, secondaryCurrency: "USD" };
+}
+
 export function fmtPct(x) {
   const value = Decimal.isDecimal(x) ? x.toNumber() : x;
   if (!isFinite(value)) return '-';

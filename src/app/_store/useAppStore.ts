@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-import { AppState, DEFAULTS, Scenario, ChartMode } from "@/lib/app-state";
+import { AppState, DEFAULTS, Scenario, ChartMode, ResultSnapshot } from "@/lib/app-state";
 import { PRESETS } from "@/lib/presets";
 import { initCalendars } from "@/lib/calc";
 
@@ -25,6 +25,8 @@ type AppStore = {
   setScenarios: (s: Scenario[]) => void;
   chartMode: ChartMode;
   setChartMode: (v: ChartMode) => void;
+  snapshot: ResultSnapshot | null;
+  setSnapshot: (snapshot: ResultSnapshot | null) => void;
 };
 
 export const useAppStore = create<AppStore>((set) => ({
@@ -47,4 +49,6 @@ export const useAppStore = create<AppStore>((set) => ({
   setScenarios: (s) => set({ scenarios: s }),
   chartMode: "balance_profit",
   setChartMode: (v) => set({ chartMode: v }),
+  snapshot: null,
+  setSnapshot: (snapshot) => set({ snapshot }),
 }));

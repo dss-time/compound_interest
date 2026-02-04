@@ -4,8 +4,10 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 
 import { CalendarGuide } from "@/app/_components/CalendarGuide";
 import { ChartPanel } from "@/app/_components/ChartPanel";
+import { ExportActions } from "@/app/_components/ExportActions";
 import { MultiSummaryTable, RandomSummaryTable, SingleDrawdownTable } from "@/app/_components/ResultTables";
-import { fmtCNY, fmtPct } from "@/lib/utils";
+import { SnapshotCompare } from "@/app/_components/SnapshotCompare";
+import { convertByCurrency, fmtMoney, fmtPct } from "@/lib/utils";
 
 export function ResultsCard({
   t,
@@ -16,9 +18,18 @@ export function ResultsCard({
   annualizedHint,
   summaryText,
   chartData,
+  snapshotChartData,
   chartMode,
   onChartModeChange,
   ddResult,
+  onExportCsv,
+  onExportPng,
+  onExportPdf,
+  snapshotMetrics,
+  currentMetrics,
+  onCaptureSnapshot,
+  onClearSnapshot,
+  chartRef,
 }: any) {
   return (
     <Card className="overflow-hidden bg-gradient-to-br from-primary/10 via-transparent to-accent/20">
@@ -39,10 +50,25 @@ export function ResultsCard({
               <div className="text-xs uppercase text-muted-foreground">{t("summaryTitle")}</div>
               <div className="mt-2 text-base font-semibold">{summaryText}</div>
             </div>
+            <ExportActions lang={lang} onCsv={onExportCsv} onPng={onExportPng} onPdf={onExportPdf} />
+            <SnapshotCompare
+              lang={lang}
+              currency={state.currency}
+              current={currentMetrics}
+              snapshot={snapshotMetrics}
+              onCapture={onCaptureSnapshot}
+              onClear={onClearSnapshot}
+            />
             <div className="grid gap-4 md:grid-cols-2">
               <div className="rounded-xl border border-border/60 bg-background/70 p-4">
                 <div className="text-xs uppercase text-muted-foreground">{t("kpiFinal")}</div>
-                <div className="mt-2 text-2xl font-semibold">{fmtCNY(lang, baseResult.base.balance)}</div>
+                <div className="mt-2 text-2xl font-semibold">{fmtMoney(lang, state.currency, baseResult.base.balance)}</div>
+                <div className="mt-1 text-xs text-muted-foreground">
+                  {(() => {
+                    const converted = convertByCurrency(baseResult.base.balance, state.currency, state.fxRate);
+                    return fmtMoney(lang, converted.secondaryCurrency, converted.secondary);
+                  })()}
+                </div>
                 <div className="mt-1 text-xs text-muted-foreground">{t("kpiFinalHint")}</div>
               </div>
               <div className="rounded-xl border border-border/60 bg-background/70 p-4">
@@ -52,7 +78,13 @@ export function ResultsCard({
                     baseResult.base.profit >= 0 ? "text-emerald-500" : "text-rose-500"
                   }`}
                 >
-                  {fmtCNY(lang, baseResult.base.profit)}
+                  {fmtMoney(lang, state.currency, baseResult.base.profit)}
+                </div>
+                <div className="mt-1 text-xs text-muted-foreground">
+                  {(() => {
+                    const converted = convertByCurrency(baseResult.base.profit, state.currency, state.fxRate);
+                    return fmtMoney(lang, converted.secondaryCurrency, converted.secondary);
+                  })()}
                 </div>
                 <div className="mt-1 text-xs text-muted-foreground">{t("kpiProfitHint")}</div>
               </div>
@@ -87,10 +119,13 @@ export function ResultsCard({
 
             <ChartPanel
               chartData={chartData}
+              snapshotData={snapshotChartData}
               chartMode={chartMode}
               onChangeMode={onChartModeChange}
               lang={lang}
               t={t}
+              currency={state.currency}
+              chartRef={chartRef}
             />
 
             {state.ddEnabled && (
@@ -113,12 +148,12 @@ export function ResultsCard({
                   <div className="text-sm text-muted-foreground">{ddResult.error || "-"}</div>
                 ) : ddResult.mode === "single" ? (
                   <div className="table-scroll">
-                    <SingleDrawdownTable data={ddResult} lang={lang} t={t} />
+                    <SingleDrawdownTable data={ddResult} lang={lang} t={t} currency={state.currency} />
                   </div>
                 ) : ddResult.mode === "multi" ? (
-                  <MultiSummaryTable data={ddResult} lang={lang} t={t} />
+                  <MultiSummaryTable data={ddResult} lang={lang} t={t} currency={state.currency} />
                 ) : ddResult.mode === "random" ? (
-                  <RandomSummaryTable data={ddResult} lang={lang} t={t} />
+                  <RandomSummaryTable data={ddResult} lang={lang} t={t} currency={state.currency} />
                 ) : null}
               </div>
             )}

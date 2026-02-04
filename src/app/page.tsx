@@ -18,7 +18,7 @@ import {
   addMonths,
   clamp,
   encodeState,
-  fmtCNY,
+  fmtMoney,
   fmtPct,
   parsePctList,
   parseSeq,
@@ -38,6 +38,9 @@ import {
 import { AppState, BaseResult, DEFAULTS, SHARE_KEY, Scenario, getMonths } from "@/lib/app-state";
 import { PRESETS } from "@/lib/presets";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useStateValidation } from "@/app/_hooks/useStateValidation";
+import { useExportActions } from "@/app/_hooks/useExportActions";
+import { buildWorkbookBlob, downloadBlob } from "@/app/_domain/export";
 
 export default function Page() {
   const {
@@ -57,6 +60,8 @@ export default function Page() {
     setScenarios,
     chartMode,
     setChartMode,
+    snapshot,
+    setSnapshot,
   } = useAppStore();
 
   const lastSaveRef = useRef(0);
@@ -83,10 +88,23 @@ export default function Page() {
   });
 
   const nowText = useClock(state.lang);
+  const validationErrors = useStateValidation(state);
+  const chartRef = useRef<HTMLDivElement | null>(null);
 
   const months = getMonths(state.duration, state.durationUnit);
+  const hasValidationErrors = useMemo(
+    () => Object.values(validationErrors).some(Boolean),
+    [validationErrors]
+  );
 
   const baseResult: BaseResult = useMemo(() => {
+    if (hasValidationErrors) {
+      return {
+        ok: false,
+        error: lang === "zh" ? "请先修复参数校验错误。" : "Please fix validation errors first.",
+      };
+    }
+
     if (state.simMode === "monthly") {
       return {
         ok: true,
@@ -134,7 +152,7 @@ export default function Page() {
 
     if (!tl.ok) return { ok: false, error: tl.error };
     return { ok: true, base: tl, extra: tl.extra };
-  }, [state, months, calendars, lang, t]);
+  }, [state, months, calendars, lang, t, hasValidationErrors]);
 
   const ddResult = useMemo(() => {
     if (!baseResult.ok || !state.ddEnabled) return { ok: true, mode: "off" };
@@ -287,21 +305,21 @@ export default function Page() {
     const monthsText = getMonths(state.duration, state.durationUnit);
     if (state.simMode === "monthly") {
       return t("summaryMonthlyTpl", {
-        balance: fmtCNY(lang, baseResult.base.balance),
-        profit: fmtCNY(lang, baseResult.base.profit),
+        balance: fmtMoney(lang, state.currency, baseResult.base.balance),
+        profit: fmtMoney(lang, state.currency, baseResult.base.profit),
         annual: fmtPct(baseResult.base.annualized),
         months: String(monthsText),
       });
     }
     const extra = baseResult.extra;
     return t("summaryTradingTpl", {
-      balance: fmtCNY(lang, baseResult.base.balance),
-      profit: fmtCNY(lang, baseResult.base.profit),
+      balance: fmtMoney(lang, state.currency, baseResult.base.balance),
+      profit: fmtMoney(lang, state.currency, baseResult.base.profit),
       annual: fmtPct(baseResult.base.annualized),
       start: extra?.startISO || "-",
       end: extra?.endISO ? toISODate(new Date(new Date(extra.endISO).getTime() - 86400000)) : "-",
     });
-  }, [baseResult, lang, state.duration, state.durationUnit, state.simMode, t]);
+  }, [baseResult, lang, state.duration, state.durationUnit, state.simMode, state.currency, t]);
 
   const chartData = useMemo(() => {
     if (!baseResult.ok) return [];
@@ -312,6 +330,78 @@ export default function Page() {
       gain: r.gain,
     }));
   }, [baseResult]);
+
+  const drawdownImpact = useMemo(() => {
+    if (!baseResult.ok || !state.ddEnabled || !ddResult.ok) return 0;
+    if (ddResult.mode === "single") {
+      const worst = ddResult.results.reduce(
+        (acc: number, row: any) => Math.min(acc, row.finalBalance),
+        Number.POSITIVE_INFINITY
+      );
+      return isFinite(worst) ? worst - baseResult.base.balance : 0;
+    }
+    if (ddResult.mode === "multi") {
+      return ddResult.tl.balance - baseResult.base.balance;
+    }
+    if (ddResult.mode === "random") {
+      return ddResult.sim.balance.p90Worst - baseResult.base.balance;
+    }
+    return 0;
+  }, [baseResult, ddResult, state.ddEnabled]);
+
+  const currentMetrics = useMemo(() => {
+    if (!baseResult.ok) return null;
+    return {
+      createdAt: Date.now(),
+      balance: baseResult.base.balance,
+      profit: baseResult.base.profit,
+      annualized: baseResult.base.annualized,
+      drawdownImpact,
+    };
+  }, [baseResult, drawdownImpact]);
+
+  const captureSnapshot = useCallback(() => {
+    if (!baseResult.ok) return;
+    setSnapshot({
+      createdAt: Date.now(),
+      balance: baseResult.base.balance,
+      profit: baseResult.base.profit,
+      annualized: baseResult.base.annualized,
+      drawdownImpact,
+      chartData,
+    });
+  }, [baseResult, chartData, drawdownImpact]);
+
+  const exportCsv = useCallback(() => {
+    if (!baseResult.ok) return;
+    const csvRows = baseResult.base.rows.map((row: any) => ({
+      month: row.m,
+      gain: row.gain,
+      profit: row.profit,
+      balance: row.balance,
+    }));
+    const blob = buildWorkbookBlob([{ name: "result", rows: csvRows }]);
+    downloadBlob(`compound-interest-${Date.now()}.csv`, blob);
+  }, [baseResult]);
+
+  const getPdfSummaryLines = useCallback(() => {
+    if (!baseResult.ok) return [lang === "zh" ? "当前无法计算" : "Cannot compute now."];
+    return [
+      `${lang === "zh" ? "币种" : "Currency"}: ${state.currency}`,
+      `${lang === "zh" ? "本金" : "Principal"}: ${fmtMoney(lang, state.currency, state.principal)}`,
+      `${lang === "zh" ? "净收益" : "Profit"}: ${fmtMoney(lang, state.currency, baseResult.base.profit)}`,
+      `${lang === "zh" ? "总金额" : "Final Balance"}: ${fmtMoney(lang, state.currency, baseResult.base.balance)}`,
+      `${lang === "zh" ? "年化" : "Annualized"}: ${fmtPct(baseResult.base.annualized)}`,
+      `${lang === "zh" ? "回撤影响" : "Drawdown Impact"}: ${fmtMoney(lang, state.currency, drawdownImpact)}`,
+    ];
+  }, [baseResult, drawdownImpact, lang, state.currency, state.principal]);
+
+  const { exportCsv: handleExportCsv, exportPng: handleExportPng, exportPdf: handleExportPdf } = useExportActions({
+    chartRef,
+    onExportCsv: exportCsv,
+    title: "compound-interest-result",
+    getSummaryLines: getPdfSummaryLines,
+  });
 
   const resetToDemo = () => {
     setState((s) => ({ ...DEFAULTS, lang: s.lang, theme: s.theme }));
@@ -403,11 +493,13 @@ export default function Page() {
     }
 
     lines.push(t("copyPrincipalTpl", { p: String(params.principal) }));
+    lines.push(`${lang === "zh" ? "币种" : "Currency"}: ${params.currency}`);
+    lines.push(`FX (USD/CNY): ${params.fxRate}`);
     lines.push(t("copyDurationTpl", { m: String(months) }));
     lines.push(params.mode === "compound" ? t("copyModeCompound") : t("copyModeSimple"));
     lines.push("");
-    lines.push(t("copyTotalTpl", { v: fmtCNY(lang, base.balance) }));
-    lines.push(t("copyProfitTpl", { v: fmtCNY(lang, base.profit) }));
+    lines.push(t("copyTotalTpl", { v: fmtMoney(lang, state.currency, base.balance) }));
+    lines.push(t("copyProfitTpl", { v: fmtMoney(lang, state.currency, base.profit) }));
     lines.push(t("copyTotalReturnTpl", { v: fmtPct(base.totalReturn) }));
     if (params.showAnnualized) lines.push(t("copyAnnualizedTpl", { v: fmtPct(base.annualized) }));
 
@@ -517,6 +609,7 @@ export default function Page() {
               baseResult={baseResult}
               onSaveScenario={saveScenario}
               onRemoveScenario={removeScenario}
+              validationErrors={validationErrors}
             />
             <ResultsCard
               t={t}
@@ -527,9 +620,18 @@ export default function Page() {
               annualizedHint={annualizedHint}
               summaryText={summaryText}
               chartData={chartData}
+              snapshotChartData={snapshot?.chartData || []}
               chartMode={chartMode}
               onChartModeChange={setChartMode}
               ddResult={ddResult}
+              onExportCsv={handleExportCsv}
+              onExportPng={handleExportPng}
+              onExportPdf={handleExportPdf}
+              snapshotMetrics={snapshot}
+              currentMetrics={currentMetrics}
+              onCaptureSnapshot={captureSnapshot}
+              onClearSnapshot={() => setSnapshot(null)}
+              chartRef={chartRef}
             />
           </div>
         </div>

@@ -2,6 +2,7 @@ import { RefreshCw, Share2, Copy } from "lucide-react";
 
 import { PRESETS } from "@/lib/presets";
 import { AppState, Market, RateMode, DurationUnit, CalcMode, DdMode, RandMethod, Scenario } from "@/lib/app-state";
+import { ValidationErrors } from "@/app/_rules/schema";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -39,6 +40,7 @@ export function ParamsCard({
   baseResult,
   onSaveScenario,
   onRemoveScenario,
+  validationErrors,
 }: {
   t: any;
   state: AppState;
@@ -60,7 +62,20 @@ export function ParamsCard({
   baseResult: any;
   onSaveScenario: () => void;
   onRemoveScenario: (id: string) => void;
+  validationErrors: ValidationErrors;
 }) {
+  const err = (key: keyof ValidationErrors) => {
+    const code = validationErrors[key];
+    if (!code) return "";
+    if (code === "mustBeNumber") return state.lang === "zh" ? "请输入数字" : "Must be a number";
+    if (code === "tooSmall") return state.lang === "zh" ? "数值过小" : "Value is too small";
+    if (code === "tooLarge") return state.lang === "zh" ? "数值过大" : "Value is too large";
+    if (code === "invalidDdList") return state.lang === "zh" ? "回撤列表格式错误，例如 5,10,20" : "Invalid drawdown list, e.g. 5,10,20";
+    if (code === "invalidDdPool") return state.lang === "zh" ? "回撤幅度池格式错误，例如 5,10,20" : "Invalid drawdown pool, e.g. 5,10,20";
+    if (code === "invalidDdSeq") return state.lang === "zh" ? "回撤序列格式错误，例如 10@6,20@18" : "Invalid drawdown sequence, e.g. 10@6,20@18";
+    return code;
+  };
+
   return (
     <Card className="overflow-hidden">
       <CardHeader className="space-y-3">
@@ -119,7 +134,7 @@ export function ParamsCard({
               </div>
 
               {state.rateMode === "daily" ? (
-                <Field label={t("lblDailyRate")} help={t("helpDailyRate")}>
+                <Field label={t("lblDailyRate")} help={t("helpDailyRate")} error={err("dailyRate")}>
                   <Input
                     type="number"
                     step="0.0001"
@@ -128,7 +143,7 @@ export function ParamsCard({
                   />
                 </Field>
               ) : (
-                <Field label={t("lblAnnualRate")} help={t("helpAnnualRate")}>
+                <Field label={t("lblAnnualRate")} help={t("helpAnnualRate")} error={err("annualRate")}>
                   <Input
                     type="number"
                     step="0.01"
@@ -155,7 +170,7 @@ export function ParamsCard({
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <Field label={t("lblPrincipal")} help={t("helpPrincipal")}>
+          <Field label={t("lblPrincipal")} help={t("helpPrincipal")} error={err("principal")}>
             <Input
               type="number"
               min="0"
@@ -166,7 +181,7 @@ export function ParamsCard({
           </Field>
 
           {state.simMode === "monthly" && (
-            <Field label={t("lblMonthlyRate")} help={t("helpMonthlyRate")}>
+            <Field label={t("lblMonthlyRate")} help={t("helpMonthlyRate")} error={err("monthlyRate")}>
               <Input
                 type="number"
                 step="0.01"
@@ -178,7 +193,7 @@ export function ParamsCard({
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <Field label={t("lblDuration")} help={t("helpDuration")}>
+          <Field label={t("lblDuration")} help={t("helpDuration")} error={err("duration")}>
             <div className="grid grid-cols-[1fr_auto] gap-2">
               <Input
                 id="duration"
@@ -210,6 +225,31 @@ export function ParamsCard({
                 <SelectItem value="simple">{t("optSimple")}</SelectItem>
               </SelectContent>
             </Select>
+          </Field>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label={state.lang === "zh" ? "币种" : "Currency"}>
+            <Select value={state.currency} onValueChange={(value) => setState((s) => ({ ...s, currency: value as "CNY" | "USD" }))}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="CNY">CNY</SelectItem>
+                <SelectItem value="USD">USD</SelectItem>
+              </SelectContent>
+            </Select>
+          </Field>
+          <Field
+            label={state.lang === "zh" ? "汇率假设 (USD/CNY)" : "FX Assumption (USD/CNY)"}
+            error={err("fxRate")}
+          >
+            <Input
+              type="number"
+              step="0.0001"
+              value={state.fxRate}
+              onChange={(e) => setState((s) => ({ ...s, fxRate: Number(e.target.value) }))}
+            />
           </Field>
         </div>
 
@@ -281,6 +321,7 @@ export function ParamsCard({
                 <Field label={t("lblDDList")} help={t("helpDDList")}>
                   <Input type="text" value={state.ddList} onChange={(e) => setState((s) => ({ ...s, ddList: e.target.value }))} />
                 </Field>
+                {err("ddList") ? <div className="text-xs text-rose-500">{err("ddList")}</div> : null}
 
                 <Field label={t("lblDDWhen")} help={t("helpDDWhen")}>
                   <Select value={state.ddStrategy} onValueChange={(value) => setState((s) => ({ ...s, ddStrategy: value as "worst" | "fixed" }))}>
@@ -295,15 +336,18 @@ export function ParamsCard({
                 </Field>
 
                 {state.ddStrategy === "fixed" && (
-                  <Field label={t("lblDDMonth")} help={t("helpDDMonth")}>
-                    <Input
-                      type="number"
-                      min="1"
-                      step="1"
-                      value={state.ddMonth}
-                      onChange={(e) => setState((s) => ({ ...s, ddMonth: Number(e.target.value) }))}
-                    />
-                  </Field>
+                  <>
+                    <Field label={t("lblDDMonth")} help={t("helpDDMonth")}>
+                      <Input
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={state.ddMonth}
+                        onChange={(e) => setState((s) => ({ ...s, ddMonth: Number(e.target.value) }))}
+                      />
+                    </Field>
+                    {err("ddMonth") ? <div className="text-xs text-rose-500">{err("ddMonth")}</div> : null}
+                  </>
                 )}
               </>
             )}
@@ -313,12 +357,14 @@ export function ParamsCard({
                 <Input type="text" value={state.ddSeq} onChange={(e) => setState((s) => ({ ...s, ddSeq: e.target.value }))} />
               </Field>
             )}
+            {state.ddMode === "multi" && err("ddSeq") ? <div className="text-xs text-rose-500">{err("ddSeq")}</div> : null}
 
             {state.ddMode === "random" && (
               <>
                 <Field label={t("lblDDPool")} help={t("helpDDPool")}>
                   <Input type="text" value={state.ddPool} onChange={(e) => setState((s) => ({ ...s, ddPool: e.target.value }))} />
                 </Field>
+                {err("ddPool") ? <div className="text-xs text-rose-500">{err("ddPool")}</div> : null}
 
                 <Field label={t("lblRandMethod")} help={t("helpRandMethod")}>
                   <Select value={state.randMethod} onValueChange={(value) => setState((s) => ({ ...s, randMethod: value as RandMethod }))}>
@@ -333,7 +379,7 @@ export function ParamsCard({
                 </Field>
 
                 {state.randMethod === "prob" ? (
-                  <Field label={t("lblRandProb")} help={t("helpRandProb")}>
+                  <Field label={t("lblRandProb")} help={t("helpRandProb")} error={err("randProb")}>
                     <Input
                       type="number"
                       min="0"
@@ -344,7 +390,7 @@ export function ParamsCard({
                     />
                   </Field>
                 ) : (
-                  <Field label={t("lblRandCount")} help={t("helpRandCount")}>
+                  <Field label={t("lblRandCount")} help={t("helpRandCount")} error={err("randCount")}>
                     <Input
                       type="number"
                       min="0"
@@ -365,6 +411,7 @@ export function ParamsCard({
                       onChange={(e) => setState((s) => ({ ...s, simRuns: Number(e.target.value) }))}
                     />
                   </Field>
+                  {err("simRuns") ? <div className="text-xs text-rose-500">{err("simRuns")}</div> : null}
                   <Field label={t("lblSimSeed")} help={t("helpSimSeed")}>
                     <Input type="text" value={state.simSeed} onChange={(e) => setState((s) => ({ ...s, simSeed: e.target.value }))} />
                   </Field>
@@ -407,6 +454,7 @@ export function ParamsCard({
           scenarios={scenarios}
           baseResult={baseResult}
           lang={state.lang}
+          currency={state.currency}
           t={t}
           onSave={onSaveScenario}
           onRemove={onRemoveScenario}
@@ -417,7 +465,7 @@ export function ParamsCard({
             <AccordionTrigger>{t("detailsSummary")}</AccordionTrigger>
             <AccordionContent>
               <div className="table-scroll">
-                <DetailsTable baseResult={baseResult} lang={state.lang} t={t} />
+                <DetailsTable baseResult={baseResult} lang={state.lang} t={t} currency={state.currency} />
               </div>
               <div className="mt-2 text-xs text-muted-foreground">{t("detailsHint")}</div>
             </AccordionContent>

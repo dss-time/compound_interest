@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { fmtCNY } from "@/lib/utils";
+import { fmtMoney } from "@/lib/utils";
 
-export function ScenarioPanel({ scenarios, baseResult, lang, t, onSave, onRemove }: any) {
+export function ScenarioPanel({ scenarios, baseResult, lang, currency, t, onSave, onRemove }: any) {
   return (
     <div className="grid gap-3 rounded-xl border border-border/60 bg-background/70 p-4">
       <div className="flex items-center justify-between">
@@ -32,17 +32,17 @@ export function ScenarioPanel({ scenarios, baseResult, lang, t, onSave, onRemove
                     {t("scenarioRemove")}
                   </Button>
                 </div>
-                <div className="mt-2 grid gap-2 text-xs text-muted-foreground">
-                  <div>
-                    {t("scenarioBalance")} {fmtCNY(lang, item.result.balance)} · {t("scenarioProfit")}{" "}
-                    {fmtCNY(lang, item.result.profit)}
-                  </div>
-                  {baseResult.ok ? (
-                    <div className={diff >= 0 ? "text-emerald-500" : "text-rose-500"}>
-                      {t("scenarioDiff")} {fmtCNY(lang, diff)}
+                    <div className="mt-2 grid gap-2 text-xs text-muted-foreground">
+                      <div>
+                        {t("scenarioBalance")} {fmtMoney(lang, currency, item.result.balance)} · {t("scenarioProfit")}{" "}
+                        {fmtMoney(lang, currency, item.result.profit)}
+                      </div>
+                      {baseResult.ok ? (
+                        <div className={diff >= 0 ? "text-emerald-500" : "text-rose-500"}>
+                          {t("scenarioDiff")} {fmtMoney(lang, currency, diff)}
+                        </div>
+                      ) : null}
                     </div>
-                  ) : null}
-                </div>
               </div>
             );
           })}

@@ -14,6 +14,7 @@ export type DurationUnit = "months" | "years";
 export type CalcMode = "compound" | "simple";
 export type DdMode = "single" | "multi" | "random";
 export type RandMethod = "prob" | "count";
+export type Currency = "CNY" | "USD";
 
 export type AppState = {
   lang: Lang;
@@ -42,6 +43,8 @@ export type AppState = {
   randCount: number;
   simRuns: number;
   simSeed: string;
+  currency: Currency;
+  fxRate: number;
 };
 
 export const DEFAULTS: AppState = {
@@ -71,6 +74,8 @@ export const DEFAULTS: AppState = {
   randCount: 6,
   simRuns: 2000,
   simSeed: "auto",
+  currency: "CNY",
+  fxRate: 7.2,
 };
 
 export type Scenario = {
@@ -94,6 +99,15 @@ export type Scenario = {
     dailyRate: number;
     annualRate: number;
   };
+};
+
+export type ResultSnapshot = {
+  createdAt: number;
+  balance: number;
+  profit: number;
+  annualized: number;
+  drawdownImpact: number;
+  chartData: Array<{ month: number; balance: number; profit: number; gain: number }>;
 };
 
 export type ChartMode = "balance_profit" | "balance" | "profit" | "gain";

@@ -1,5 +1,5 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { fmtCNY } from "@/lib/utils";
+import { fmtMoney } from "@/lib/utils";
 
 function BaseTable({ headers, rows }: { headers: string[]; rows: any[][] }) {
   return (
@@ -39,19 +39,19 @@ function BaseTable({ headers, rows }: { headers: string[]; rows: any[][] }) {
   );
 }
 
-export function DetailsTable({ baseResult, lang, t }: any) {
+export function DetailsTable({ baseResult, lang, t, currency = "CNY" }: any) {
   if (!baseResult.ok) return null;
   const headers = [t("thMonth"), t("thGain"), t("thProfit"), t("thBalance")];
   const body = baseResult.base.rows.map((r: any) => [
     r.m,
-    fmtCNY(lang, r.gain),
-    fmtCNY(lang, r.profit),
-    fmtCNY(lang, r.balance),
+    fmtMoney(lang, currency, r.gain),
+    fmtMoney(lang, currency, r.profit),
+    fmtMoney(lang, currency, r.balance),
   ]);
   return <BaseTable headers={headers} rows={body} />;
 }
 
-export function SingleDrawdownTable({ data, lang, t }: any) {
+export function SingleDrawdownTable({ data, lang, t, currency = "CNY" }: any) {
   const headers = [
     t("thDd"),
     t("thNetProfit"),
@@ -60,36 +60,36 @@ export function SingleDrawdownTable({ data, lang, t }: any) {
     data.strategy === "fixed" ? t("thFixedMonth") : t("thWorstMonth"),
   ];
   const body: any[] = [];
-  body.push(["-", fmtCNY(lang, data.base.profit), fmtCNY(lang, data.base.balance), "-", "-"]);
+  body.push(["-", fmtMoney(lang, currency, data.base.profit), fmtMoney(lang, currency, data.base.balance), "-", "-"]);
   data.results.forEach((r: any) => {
     const prClass = r.finalProfit >= 0 ? "good" : "bad";
     body.push([
       r.dd + "%",
-      { text: fmtCNY(lang, r.finalProfit), className: prClass },
-      fmtCNY(lang, r.finalBalance),
-      isFinite(r.peakBefore) ? fmtCNY(lang, r.peakBefore) : "-",
+      { text: fmtMoney(lang, currency, r.finalProfit), className: prClass },
+      fmtMoney(lang, currency, r.finalBalance),
+      isFinite(r.peakBefore) ? fmtMoney(lang, currency, r.peakBefore) : "-",
       String(r.month),
     ]);
   });
   return <BaseTable headers={headers} rows={body} />;
 }
 
-export function MultiSummaryTable({ data, lang, t }: any) {
+export function MultiSummaryTable({ data, lang, t, currency = "CNY" }: any) {
   const headers = [lang === "zh" ? "项目" : "Item", lang === "zh" ? "数值" : "Value"];
   const ddCount = data.seq.length;
   const worstPeak = data.tl.rows.reduce((acc: number, r: any) => Math.max(acc, r.peak), data.base.balance);
   const body = [
     [lang === "zh" ? "回撤次数" : "Drawdowns", String(ddCount)],
-    [t("thNetProfit"), { text: fmtCNY(lang, data.tl.profit), className: data.tl.profit >= 0 ? "good" : "bad" }],
-    [t("thFinalBalance"), fmtCNY(lang, data.tl.balance)],
+    [t("thNetProfit"), { text: fmtMoney(lang, currency, data.tl.profit), className: data.tl.profit >= 0 ? "good" : "bad" }],
+    [t("thFinalBalance"), fmtMoney(lang, currency, data.tl.balance)],
     [
       lang === "zh" ? "相对无回撤差值" : "Delta vs no-DD",
       {
-        text: fmtCNY(lang, data.tl.balance - data.base.balance),
+        text: fmtMoney(lang, currency, data.tl.balance - data.base.balance),
         className: data.tl.balance - data.base.balance >= 0 ? "good" : "bad",
       },
     ],
-    [lang === "zh" ? "周期内最高峰值（Peak）" : "Peak during period", fmtCNY(lang, worstPeak)],
+    [lang === "zh" ? "周期内最高峰值（Peak）" : "Peak during period", fmtMoney(lang, currency, worstPeak)],
   ];
 
   const evHeaders = [
@@ -103,8 +103,8 @@ export function MultiSummaryTable({ data, lang, t }: any) {
     String(idx + 1),
     String(e.month),
     e.dd + "%",
-    fmtCNY(lang, e.peakBefore),
-    fmtCNY(lang, e.balanceAfter),
+    fmtMoney(lang, currency, e.peakBefore),
+    fmtMoney(lang, currency, e.balanceAfter),
   ]);
 
   return (
@@ -119,29 +119,29 @@ export function MultiSummaryTable({ data, lang, t }: any) {
   );
 }
 
-export function RandomSummaryTable({ data, lang, t }: any) {
+export function RandomSummaryTable({ data, lang, t, currency = "CNY" }: any) {
   const headers = [t("thMetric"), t("thP50"), t("thP90Worst"), t("thMin"), t("thMax")];
   const body = [
     [
       t("thNetProfit"),
-      fmtCNY(lang, data.sim.profit.p50),
-      fmtCNY(lang, data.sim.profit.p90Worst),
-      fmtCNY(lang, data.sim.profit.min),
-      fmtCNY(lang, data.sim.profit.max),
+      fmtMoney(lang, currency, data.sim.profit.p50),
+      fmtMoney(lang, currency, data.sim.profit.p90Worst),
+      fmtMoney(lang, currency, data.sim.profit.min),
+      fmtMoney(lang, currency, data.sim.profit.max),
     ],
     [
       t("thFinalBalance"),
-      fmtCNY(lang, data.sim.balance.p50),
-      fmtCNY(lang, data.sim.balance.p90Worst),
-      fmtCNY(lang, data.sim.balance.min),
-      fmtCNY(lang, data.sim.balance.max),
+      fmtMoney(lang, currency, data.sim.balance.p50),
+      fmtMoney(lang, currency, data.sim.balance.p90Worst),
+      fmtMoney(lang, currency, data.sim.balance.min),
+      fmtMoney(lang, currency, data.sim.balance.max),
     ],
     [
       lang === "zh" ? "相对无回撤差值（余额）" : "Delta vs no-DD (balance)",
-      fmtCNY(lang, data.sim.balance.p50 - data.base.balance),
-      fmtCNY(lang, data.sim.balance.p90Worst - data.base.balance),
-      fmtCNY(lang, data.sim.balance.min - data.base.balance),
-      fmtCNY(lang, data.sim.balance.max - data.base.balance),
+      fmtMoney(lang, currency, data.sim.balance.p50 - data.base.balance),
+      fmtMoney(lang, currency, data.sim.balance.p90Worst - data.base.balance),
+      fmtMoney(lang, currency, data.sim.balance.min - data.base.balance),
+      fmtMoney(lang, currency, data.sim.balance.max - data.base.balance),
     ],
   ];
 
