@@ -1,29 +1,14 @@
 import Decimal from "decimal.js";
 
+import { addMonths, daysDiff, formatNow, toISODate } from "@/app/_domain/date";
+
+export { addMonths, daysDiff, formatNow, toISODate };
+
 Decimal.set({ precision: 40, rounding: Decimal.ROUND_HALF_UP });
 
 export const clamp = (n, min, max) => Math.min(Math.max(n, min), max);
 
 export const isISODate = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s);
-
-export function toISODate(d) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-
-export function addMonths(date, months) {
-  const d = new Date(date.getTime());
-  const day = d.getDate();
-  d.setMonth(d.getMonth() + months);
-  if (d.getDate() !== day) d.setDate(0);
-  return d;
-}
-
-export function daysDiff(a, b) {
-  return (b.getTime() - a.getTime()) / 86400000;
-}
 
 export function parsePctList(s) {
   return (s || '')
@@ -82,12 +67,6 @@ export function quantile(sorted, q) {
   const rest = pos - base;
   if (sorted[base + 1] === undefined) return sorted[base];
   return sorted[base] + rest * (sorted[base + 1] - sorted[base]);
-}
-
-export function formatNow(lang) {
-  return new Date().toLocaleString(lang === 'zh' ? 'zh-CN' : 'en-US', {
-    hour12: false,
-  });
 }
 
 export function fmtCNY(lang, n) {

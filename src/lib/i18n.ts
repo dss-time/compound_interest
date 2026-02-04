@@ -148,10 +148,6 @@ export const I18N = {
     chartProfit: '净收益',
     chartGain: '当月收益',
     chartModeBoth: '余额+净收益',
-    chartTitle: '收益曲线',
-    chartSub: '余额与净收益随时间变化趋势',
-    chartBalance: '余额',
-    chartProfit: '净收益',
 
     ddBoxTitleDefault: '回撤控制下的收益',
 
@@ -408,10 +404,6 @@ export const I18N = {
     chartProfit: 'Profit',
     chartGain: 'Monthly gain',
     chartModeBoth: 'Balance + Profit',
-    chartTitle: 'Performance Curve',
-    chartSub: 'Balance and profit over time',
-    chartBalance: 'Balance',
-    chartProfit: 'Profit',
 
     ddBoxTitleDefault: 'Return under drawdown control',
 
