@@ -33,8 +33,9 @@ export function useExportActions({ chartRef, onExportCsv, title, getSummaryLines
       summaryLines: getSummaryLines(),
       chartPngDataUrl,
     });
-    const buffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
-    downloadBlob(`${title}.pdf`, new Blob([buffer], { type: "application/pdf" }));
+    const normalized = new Uint8Array(bytes.byteLength);
+    normalized.set(bytes);
+    downloadBlob(`${title}.pdf`, new Blob([normalized], { type: "application/pdf" }));
     return true;
   }, [chartRef, getSummaryLines, title]);
 
