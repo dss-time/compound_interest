@@ -1,4 +1,5 @@
 import "./globals.css";
+import Script from "next/script";
 import { Space_Grotesk, Source_Serif_4 } from "next/font/google";
 
 const sans = Space_Grotesk({
@@ -21,7 +22,14 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="zh-CN" suppressHydrationWarning>
-      <body className={`${sans.variable} ${display.variable}`}>{children}</body>
+      <body className={`${sans.variable} ${display.variable}`}>
+        {children}
+        <Script
+          src="https://cloud.umami.is/script.js"
+          data-website-id="865b0af3-5935-44af-a7ec-13df52e4d393"
+          strategy="afterInteractive"
+        />
+      </body>
     </html>
   );
 }
