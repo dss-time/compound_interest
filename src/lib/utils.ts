@@ -99,6 +99,16 @@ export function convertByCurrency(value, currency, fxRate) {
   return { primary: numeric, secondary: numeric / fx, secondaryCurrency: "USD" };
 }
 
+export function convertAmount(value, fromCurrency, toCurrency, fxRate) {
+  const numeric = Number(value);
+  const fx = Number(fxRate) || 1;
+  if (!isFinite(numeric)) return NaN;
+  if (fromCurrency === toCurrency) return numeric;
+  if (fromCurrency === "USD" && toCurrency === "CNY") return numeric * fx;
+  if (fromCurrency === "CNY" && toCurrency === "USD") return numeric / fx;
+  return numeric;
+}
+
 export function fmtPct(x) {
   const value = Decimal.isDecimal(x) ? x.toNumber() : x;
   if (!isFinite(value)) return '-';

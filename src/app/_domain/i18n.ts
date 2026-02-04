@@ -18,7 +18,11 @@ export function initI18n(lang: "zh" | "en") {
     resources,
     lng: lang,
     fallbackLng: "zh",
-    interpolation: { escapeValue: false },
+    interpolation: {
+      escapeValue: false,
+      prefix: "{",
+      suffix: "}",
+    },
   });
   initialized = true;
 }

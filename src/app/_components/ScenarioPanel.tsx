@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { fmtMoney } from "@/lib/utils";
+import { convertAmount, fmtMoney } from "@/lib/utils";
 
 export function ScenarioPanel({ scenarios, baseResult, lang, currency, t, onSave, onRemove }: any) {
   return (
@@ -18,7 +18,11 @@ export function ScenarioPanel({ scenarios, baseResult, lang, currency, t, onSave
       ) : (
         <div className="grid gap-3">
           {scenarios.map((item: any) => {
-            const diff = baseResult.ok ? baseResult.base.balance - item.result.balance : 0;
+            const scenarioCurrency = item.result.currency || currency;
+            const scenarioFx = item.result.fxRate || 1;
+            const scenarioBalance = convertAmount(item.result.balance, scenarioCurrency, currency, scenarioFx);
+            const scenarioProfit = convertAmount(item.result.profit, scenarioCurrency, currency, scenarioFx);
+            const diff = baseResult.ok ? baseResult.base.balance - scenarioBalance : 0;
             return (
               <div key={item.id} className="rounded-lg border border-border/60 bg-background/80 p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -34,8 +38,8 @@ export function ScenarioPanel({ scenarios, baseResult, lang, currency, t, onSave
                 </div>
                     <div className="mt-2 grid gap-2 text-xs text-muted-foreground">
                       <div>
-                        {t("scenarioBalance")} {fmtMoney(lang, currency, item.result.balance)} · {t("scenarioProfit")}{" "}
-                        {fmtMoney(lang, currency, item.result.profit)}
+                        {t("scenarioBalance")} {fmtMoney(lang, currency, scenarioBalance)} · {t("scenarioProfit")}{" "}
+                        {fmtMoney(lang, currency, scenarioProfit)}
                       </div>
                       {baseResult.ok ? (
                         <div className={diff >= 0 ? "text-emerald-500" : "text-rose-500"}>

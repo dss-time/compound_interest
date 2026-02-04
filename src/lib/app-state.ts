@@ -86,6 +86,8 @@ export type Scenario = {
   result: {
     balance: number;
     profit: number;
+    currency: Currency;
+    fxRate: number;
     totalReturn: number;
     annualized: number;
     months: number;
@@ -103,6 +105,8 @@ export type Scenario = {
 
 export type ResultSnapshot = {
   createdAt: number;
+  currency: Currency;
+  fxRate: number;
   balance: number;
   profit: number;
   annualized: number;

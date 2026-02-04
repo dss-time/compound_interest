@@ -17,6 +17,7 @@ import { initI18n, t as translate } from "@/app/_domain/i18n";
 import {
   addMonths,
   clamp,
+  convertAmount,
   encodeState,
   fmtMoney,
   fmtPct,
@@ -360,17 +361,37 @@ export default function Page() {
     };
   }, [baseResult, drawdownImpact]);
 
+  const normalizedSnapshot = useMemo(() => {
+    if (!snapshot) return null;
+    const from = snapshot.currency || state.currency;
+    const fx = snapshot.fxRate || state.fxRate;
+    return {
+      ...snapshot,
+      balance: convertAmount(snapshot.balance, from, state.currency, fx),
+      profit: convertAmount(snapshot.profit, from, state.currency, fx),
+      drawdownImpact: convertAmount(snapshot.drawdownImpact, from, state.currency, fx),
+      chartData: snapshot.chartData.map((row) => ({
+        ...row,
+        balance: convertAmount(row.balance, from, state.currency, fx),
+        profit: convertAmount(row.profit, from, state.currency, fx),
+        gain: convertAmount(row.gain, from, state.currency, fx),
+      })),
+    };
+  }, [snapshot, state.currency, state.fxRate]);
+
   const captureSnapshot = useCallback(() => {
     if (!baseResult.ok) return;
     setSnapshot({
       createdAt: Date.now(),
+      currency: state.currency,
+      fxRate: state.fxRate,
       balance: baseResult.base.balance,
       profit: baseResult.base.profit,
       annualized: baseResult.base.annualized,
       drawdownImpact,
       chartData,
     });
-  }, [baseResult, chartData, drawdownImpact]);
+  }, [baseResult, chartData, drawdownImpact, state.currency, state.fxRate]);
 
   const exportCsv = useCallback(() => {
     if (!baseResult.ok) return;
@@ -431,6 +452,8 @@ export default function Page() {
       result: {
         balance: baseResult.base.balance,
         profit: baseResult.base.profit,
+        currency: state.currency,
+        fxRate: state.fxRate,
         totalReturn: baseResult.base.totalReturn,
         annualized: baseResult.base.annualized,
         months: monthsText,
@@ -620,14 +643,14 @@ export default function Page() {
               annualizedHint={annualizedHint}
               summaryText={summaryText}
               chartData={chartData}
-              snapshotChartData={snapshot?.chartData || []}
+              snapshotChartData={normalizedSnapshot?.chartData || []}
               chartMode={chartMode}
               onChartModeChange={setChartMode}
               ddResult={ddResult}
               onExportCsv={handleExportCsv}
               onExportPng={handleExportPng}
               onExportPdf={handleExportPdf}
-              snapshotMetrics={snapshot}
+              snapshotMetrics={normalizedSnapshot}
               currentMetrics={currentMetrics}
               onCaptureSnapshot={captureSnapshot}
               onClearSnapshot={() => setSnapshot(null)}
