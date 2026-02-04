@@ -37,6 +37,7 @@ import {
 } from "@/lib/calc";
 import { AppState, BaseResult, DEFAULTS, SHARE_KEY, Scenario, getMonths } from "@/lib/app-state";
 import { PRESETS } from "@/lib/presets";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export default function Page() {
   const {
@@ -483,54 +484,56 @@ export default function Page() {
   });
 
   return (
-    <main className={PAGE_BG}>
-      <div className={PAGE_WRAP}>
-        <AppHeader
-          nowText={nowText}
-          lang={state.lang}
-          theme={state.theme}
-          t={t}
-          onToggleTheme={onToggleTheme}
-          onToggleLang={onToggleLang}
-        />
-        <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-          <ParamsCard
-            t={t}
-            state={state}
-            setState={setState}
-            presetId={presetId}
-            setPresetId={setPresetId}
-            saveStatus={saveStatus}
-            applyPreset={applyPreset}
-            applyQuickPreset={applyQuickPreset}
-            onCalendarImport={onCalendarImport}
-            calendarStatus={calendarStatus}
-            calendarBanner={calendarBanner}
-            resetToDemo={resetToDemo}
-            handleCopy={handleCopy}
-            handleShare={handleShare}
-            copyLabel={copyLabel}
-            shareLabel={shareLabel}
-            scenarios={scenarios}
-            baseResult={baseResult}
-            onSaveScenario={saveScenario}
-            onRemoveScenario={removeScenario}
-          />
-          <ResultsCard
-            t={t}
+    <TooltipProvider>
+      <main className={PAGE_BG}>
+        <div className={PAGE_WRAP}>
+          <AppHeader
+            nowText={nowText}
             lang={state.lang}
-            state={state}
-            calendars={calendars}
-            baseResult={baseResult}
-            annualizedHint={annualizedHint}
-            summaryText={summaryText}
-            chartData={chartData}
-            chartMode={chartMode}
-            onChartModeChange={setChartMode}
-            ddResult={ddResult}
+            theme={state.theme}
+            t={t}
+            onToggleTheme={onToggleTheme}
+            onToggleLang={onToggleLang}
           />
+          <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+            <ParamsCard
+              t={t}
+              state={state}
+              setState={setState}
+              presetId={presetId}
+              setPresetId={setPresetId}
+              saveStatus={saveStatus}
+              applyPreset={applyPreset}
+              applyQuickPreset={applyQuickPreset}
+              onCalendarImport={onCalendarImport}
+              calendarStatus={calendarStatus}
+              calendarBanner={calendarBanner}
+              resetToDemo={resetToDemo}
+              handleCopy={handleCopy}
+              handleShare={handleShare}
+              copyLabel={copyLabel}
+              shareLabel={shareLabel}
+              scenarios={scenarios}
+              baseResult={baseResult}
+              onSaveScenario={saveScenario}
+              onRemoveScenario={removeScenario}
+            />
+            <ResultsCard
+              t={t}
+              lang={state.lang}
+              state={state}
+              calendars={calendars}
+              baseResult={baseResult}
+              annualizedHint={annualizedHint}
+              summaryText={summaryText}
+              chartData={chartData}
+              chartMode={chartMode}
+              onChartModeChange={setChartMode}
+              ddResult={ddResult}
+            />
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </TooltipProvider>
   );
 }
