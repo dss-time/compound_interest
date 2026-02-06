@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { fmtMoney, fmtPct } from "@/lib/utils";
 
 type SnapshotLike = {
+  id: string;
   createdAt: number;
   balance: number;
   profit: number;
@@ -20,6 +21,9 @@ export function SnapshotCompare({
   currency,
   current,
   snapshot,
+  snapshots,
+  selectedId,
+  onSelect,
   onCapture,
   onClear,
 }: {
@@ -27,12 +31,15 @@ export function SnapshotCompare({
   currency: "CNY" | "USD";
   current: SnapshotLike | null;
   snapshot: SnapshotLike | null;
+  snapshots: SnapshotLike[];
+  selectedId: string | null;
+  onSelect: (id: string) => void;
   onCapture: () => void;
   onClear: () => void;
 }) {
   const title = lang === "zh" ? "结果快照对比" : "Snapshot Compare";
   const capture = lang === "zh" ? "保存当前快照" : "Capture Current";
-  const clear = lang === "zh" ? "清除快照" : "Clear Snapshot";
+  const clear = lang === "zh" ? "删除选中快照" : "Delete Snapshot";
   const empty = lang === "zh" ? "暂无快照，先保存一次用于差异对比。" : "No snapshot yet. Capture one first.";
 
   return (
@@ -48,6 +55,28 @@ export function SnapshotCompare({
           </Button>
         </div>
       </div>
+
+      {snapshots.length ? (
+        <div className="flex flex-wrap gap-2 text-xs">
+          {snapshots.map((item) => {
+            const active = selectedId === item.id;
+            return (
+              <button
+                key={item.id}
+                className={`rounded-full border px-3 py-1 transition ${
+                  active
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border/60 bg-background/80 text-muted-foreground hover:text-foreground"
+                }`}
+                onClick={() => onSelect(item.id)}
+              >
+                {new Date(item.createdAt).toLocaleDateString(lang === "zh" ? "zh-CN" : "en-US")} ·{" "}
+                {new Date(item.createdAt).toLocaleTimeString(lang === "zh" ? "zh-CN" : "en-US", { hour12: false })}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
 
       {!snapshot || !current ? (
         <div className="text-xs text-muted-foreground">{empty}</div>

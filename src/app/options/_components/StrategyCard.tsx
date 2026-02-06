@@ -21,6 +21,7 @@ export function StrategyCard({
   maxLoss,
   active,
   onSelect,
+  outlookLabel,
 }: {
   strategy: StrategyTemplate;
   pnl: number;
@@ -29,13 +30,14 @@ export function StrategyCard({
   maxLoss: number;
   active: boolean;
   onSelect: () => void;
+  outlookLabel: string;
 }) {
   return (
     <Card className={active ? "border-primary shadow-lg" : ""}>
       <CardHeader className="space-y-2">
         <div className="flex items-center justify-between gap-2">
           <CardTitle className="text-base">{strategy.name}</CardTitle>
-          <Badge variant="outline">{strategy.outlook}</Badge>
+          <Badge variant="outline">{outlookLabel}</Badge>
         </div>
         <CardDescription>{strategy.description}</CardDescription>
       </CardHeader>

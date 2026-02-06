@@ -14,5 +14,11 @@ export function daysDiff(a: Date | string | dayjs.Dayjs, b: Date | string | dayj
 }
 
 export function formatNow(lang: "zh" | "en") {
-  return dayjs().locale(lang === "zh" ? "zh-cn" : "en").format("YYYY-MM-DD HH:mm:ss");
+  const now = dayjs().locale(lang === "zh" ? "zh-cn" : "en");
+  const zone = Intl.DateTimeFormat().resolvedOptions().timeZone || "Local";
+  const offset = now.format("Z");
+  if (lang === "zh") {
+    return `${now.format("YYYY-MM-DD dddd HH:mm:ss")} GMT${offset} (${zone})`;
+  }
+  return `${now.format("YYYY-MM-DD dddd HH:mm:ss")} GMT${offset} (${zone})`;
 }

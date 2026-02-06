@@ -19,6 +19,8 @@ export type Currency = "CNY" | "USD";
 export type AppState = {
   lang: Lang;
   theme: Theme;
+  uiMode: "basic" | "pro";
+  devMode: boolean;
   simMode: SimMode;
   market: Market;
   startDate: string;
@@ -50,6 +52,8 @@ export type AppState = {
 export const DEFAULTS: AppState = {
   lang: "zh",
   theme: "dark",
+  uiMode: "basic",
+  devMode: false,
   simMode: "monthly",
   market: "CN",
   startDate: "",
@@ -104,6 +108,7 @@ export type Scenario = {
 };
 
 export type ResultSnapshot = {
+  id: string;
   createdAt: number;
   currency: Currency;
   fxRate: number;

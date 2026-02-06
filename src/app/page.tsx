@@ -6,6 +6,7 @@ import { AppHeader } from "@/app/_components/AppHeader";
 import { ParamsCard } from "@/app/_compose/ParamsCard";
 import { ResultsCard } from "@/app/_compose/ResultsCard";
 import { PAGE_BG, PAGE_WRAP } from "@/app/_styles/layout";
+import { type CalendarEventInput } from "@/app/_components/ScenarioCalendar";
 import { useAppStore } from "@/app/_store/useAppStore";
 import { useAppPersistence } from "@/app/_effects/useAppPersistence";
 import { useAutoStartDate } from "@/app/_effects/useAutoStartDate";
@@ -63,6 +64,10 @@ export default function Page() {
     setChartMode,
     snapshot,
     setSnapshot,
+    snapshots,
+    setSnapshots,
+    selectedSnapshotId,
+    setSelectedSnapshotId,
   } = useAppStore();
 
   const lastSaveRef = useRef(0);
@@ -156,7 +161,7 @@ export default function Page() {
   }, [state, months, calendars, lang, t, hasValidationErrors]);
 
   const ddResult = useMemo(() => {
-    if (!baseResult.ok || !state.ddEnabled) return { ok: true, mode: "off" };
+    if (!baseResult.ok || !state.ddEnabled || state.uiMode !== "pro") return { ok: true, mode: "off" };
     const base = baseResult.base;
 
     if (state.ddMode === "single") {
@@ -332,8 +337,62 @@ export default function Page() {
     }));
   }, [baseResult]);
 
+  const sensitivityRows = useMemo(() => {
+    if (!baseResult.ok) return [];
+    const rows: Array<{ label: string; balance: number; profit: number }> = [];
+    if (state.simMode === "monthly") {
+      const shifts = [-2, -1, 0, 1, 2];
+      shifts.forEach((shift) => {
+        const monthlyRate = (state.monthlyRate + shift) / 100;
+        const result = calcMonthlyTimeline({
+          principal: state.principal,
+          monthlyRate,
+          months,
+          mode: state.mode,
+          events: [],
+        });
+        rows.push({
+          label: `${shift > 0 ? "+" : ""}${shift.toFixed(0)}%`,
+          balance: result.balance,
+          profit: result.profit,
+        });
+      });
+      return rows;
+    }
+
+    if (!state.startDate) return rows;
+    const meta = calendars.meta[state.market];
+    if (!meta || !meta.count) return rows;
+    const shifts = state.rateMode === "daily" ? [-0.03, -0.015, 0, 0.015, 0.03] : [-3, -1.5, 0, 1.5, 3];
+    shifts.forEach((shift) => {
+      const startDate = new Date(state.startDate + "T00:00:00");
+      const result = calcTradingDaysTimelineStrict({
+        calendars,
+        principal: state.principal,
+        startDate,
+        months,
+        mode: state.mode,
+        market: state.market,
+        rateMode: state.rateMode,
+        dailyRateDecimal: (state.dailyRate + (state.rateMode === "daily" ? shift : 0)) / 100,
+        annualRateDecimal: (state.annualRate + (state.rateMode === "annual" ? shift : 0)) / 100,
+        eventsByMonth: new Map(),
+        t,
+        lang,
+      });
+      if (result.ok) {
+        rows.push({
+          label: `${shift > 0 ? "+" : ""}${shift.toFixed(state.rateMode === "daily" ? 3 : 1)}%`,
+          balance: result.balance,
+          profit: result.profit,
+        });
+      }
+    });
+    return rows;
+  }, [baseResult, state, months, calendars, t, lang]);
+
   const drawdownImpact = useMemo(() => {
-    if (!baseResult.ok || !state.ddEnabled || !ddResult.ok) return 0;
+    if (!baseResult.ok || !state.ddEnabled || state.uiMode !== "pro" || !ddResult.ok) return 0;
     if (ddResult.mode === "single") {
       const worst = ddResult.results.reduce(
         (acc: number, row: any) => Math.min(acc, row.finalBalance),
@@ -348,11 +407,12 @@ export default function Page() {
       return ddResult.sim.balance.p90Worst - baseResult.base.balance;
     }
     return 0;
-  }, [baseResult, ddResult, state.ddEnabled]);
+  }, [baseResult, ddResult, state.ddEnabled, state.uiMode]);
 
   const currentMetrics = useMemo(() => {
     if (!baseResult.ok) return null;
     return {
+      id: "current",
       createdAt: Date.now(),
       balance: baseResult.base.balance,
       profit: baseResult.base.profit,
@@ -362,26 +422,157 @@ export default function Page() {
   }, [baseResult, drawdownImpact]);
 
   const normalizedSnapshot = useMemo(() => {
-    if (!snapshot) return null;
-    const from = snapshot.currency || state.currency;
-    const fx = snapshot.fxRate || state.fxRate;
+    const target = snapshots.find((s) => s.id === selectedSnapshotId) || snapshot;
+    if (!target) return null;
+    const from = target.currency || state.currency;
+    const fx = target.fxRate || state.fxRate;
     return {
-      ...snapshot,
-      balance: convertAmount(snapshot.balance, from, state.currency, fx),
-      profit: convertAmount(snapshot.profit, from, state.currency, fx),
-      drawdownImpact: convertAmount(snapshot.drawdownImpact, from, state.currency, fx),
-      chartData: snapshot.chartData.map((row) => ({
+      ...target,
+      balance: convertAmount(target.balance, from, state.currency, fx),
+      profit: convertAmount(target.profit, from, state.currency, fx),
+      drawdownImpact: convertAmount(target.drawdownImpact, from, state.currency, fx),
+      chartData: target.chartData.map((row) => ({
         ...row,
         balance: convertAmount(row.balance, from, state.currency, fx),
         profit: convertAmount(row.profit, from, state.currency, fx),
         gain: convertAmount(row.gain, from, state.currency, fx),
       })),
     };
-  }, [snapshot, state.currency, state.fxRate]);
+  }, [snapshot, snapshots, selectedSnapshotId, state.currency, state.fxRate]);
+
+  const calendarInitialDate = useMemo(() => {
+    if (state.startDate) return new Date(state.startDate + "T00:00:00");
+    if (snapshots.length) return new Date(snapshots[0].createdAt);
+    return new Date();
+  }, [state.startDate, snapshots]);
+
+  const calendarEvents = useMemo<CalendarEventInput[]>(() => {
+    const events: CalendarEventInput[] = [];
+    const startDate = state.startDate ? new Date(state.startDate + "T00:00:00") : (() => {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return today;
+    })();
+    events.push({ id: "start", title: t("calEventStart"), start: startDate });
+    events.push({
+      id: "end",
+      title: t("calEventEnd"),
+      start: addMonths(startDate, Math.max(1, months)),
+    });
+
+    if (startDate && state.ddEnabled) {
+      if (state.ddMode === "single" && state.ddStrategy === "fixed") {
+        const list = parsePctList(state.ddList);
+        const ddPctList = list.length ? list : [10];
+        const fixedMonth = clamp(Math.floor(Number(state.ddMonth) || 1), 1, Math.max(1, months));
+        const drawdownDate = addMonths(startDate, fixedMonth);
+        ddPctList.forEach((dd, idx) => {
+          events.push({
+            id: `dd_fixed_${idx}`,
+            title: t("calEventDrawdown", { dd: String(dd) }),
+            start: drawdownDate,
+          });
+        });
+      } else if (state.ddMode === "multi") {
+        const seq = parseSeq(state.ddSeq);
+        seq.forEach((item, idx) => {
+          events.push({
+            id: `dd_seq_${idx}`,
+            title: t("calEventDrawdown", { dd: String(item.dd) }),
+            start: addMonths(startDate, item.month),
+          });
+        });
+      } else if (state.ddMode === "random") {
+        events.push({
+          id: "dd_random",
+          title: t("calEventDrawdownRandom"),
+          start: startDate,
+        });
+      }
+    }
+
+    snapshots.forEach((snap, index) => {
+      events.push({
+        id: `snap_${snap.id}`,
+        title: t("calEventSnapshot", { n: String(index + 1) }),
+        start: new Date(snap.createdAt),
+      });
+    });
+
+    return events;
+  }, [
+    state.startDate,
+    state.ddEnabled,
+    state.ddMode,
+    state.ddStrategy,
+    state.ddList,
+    state.ddMonth,
+    state.ddSeq,
+    months,
+    snapshots,
+    t,
+  ]);
+
+  const jsonPanels = useMemo(() => {
+    const params = {
+      ...state,
+      months,
+      locale: state.lang,
+    };
+
+    const resultPayload = baseResult.ok
+      ? {
+          summary: summaryText,
+          metrics: {
+            balance: baseResult.base.balance,
+            profit: baseResult.base.profit,
+            annualized: baseResult.base.annualized,
+            totalReturn: baseResult.base.totalReturn,
+            drawdownImpact,
+          },
+          extra: baseResult.extra || null,
+          rowsPreview: baseResult.base.rows.slice(0, 12),
+          rowsTotal: baseResult.base.rows.length,
+        }
+      : { error: (baseResult as { error?: string }).error || "-" };
+
+    const snapshotPayload = normalizedSnapshot
+      ? {
+          id: normalizedSnapshot.id,
+          createdAt: normalizedSnapshot.createdAt,
+          balance: normalizedSnapshot.balance,
+          profit: normalizedSnapshot.profit,
+          annualized: normalizedSnapshot.annualized,
+          drawdownImpact: normalizedSnapshot.drawdownImpact,
+        }
+      : { message: t("insightSnapshotEmpty") };
+
+    return [
+      {
+        id: "params",
+        title: t("insightDataParams"),
+        subtitle: t("insightDataParamsSub"),
+        data: params,
+      },
+      {
+        id: "results",
+        title: t("insightDataResults"),
+        subtitle: t("insightDataResultsSub"),
+        data: resultPayload,
+      },
+      {
+        id: "snapshot",
+        title: t("insightDataSnapshot"),
+        subtitle: t("insightDataSnapshotSub"),
+        data: snapshotPayload,
+      },
+    ];
+  }, [state, months, baseResult, summaryText, drawdownImpact, normalizedSnapshot, t]);
 
   const captureSnapshot = useCallback(() => {
     if (!baseResult.ok) return;
-    setSnapshot({
+    const snap = {
+      id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       createdAt: Date.now(),
       currency: state.currency,
       fxRate: state.fxRate,
@@ -390,8 +581,21 @@ export default function Page() {
       annualized: baseResult.base.annualized,
       drawdownImpact,
       chartData,
-    });
-  }, [baseResult, chartData, drawdownImpact, state.currency, state.fxRate]);
+    };
+    setSnapshot(snap);
+    setSnapshots([snap, ...snapshots].slice(0, 5));
+    setSelectedSnapshotId(snap.id);
+  }, [
+    baseResult,
+    chartData,
+    drawdownImpact,
+    state.currency,
+    state.fxRate,
+    setSnapshot,
+    snapshots,
+    setSnapshots,
+    setSelectedSnapshotId,
+  ]);
 
   const exportCsv = useCallback(() => {
     if (!baseResult.ok) return;
@@ -583,7 +787,11 @@ export default function Page() {
   };
 
   const onToggleTheme = () => {
-    setState((s) => ({ ...s, theme: s.theme === "dark" ? "light" : "dark" }));
+    setState((s) => {
+      const nextTheme = s.theme === "dark" ? "light" : "dark";
+      document.documentElement.classList.toggle("dark", nextTheme === "dark");
+      return { ...s, theme: nextTheme };
+    });
   };
 
   const onToggleLang = () => {
@@ -640,6 +848,7 @@ export default function Page() {
               state={state}
               calendars={calendars}
               baseResult={baseResult}
+              months={months}
               annualizedHint={annualizedHint}
               summaryText={summaryText}
               chartData={chartData}
@@ -652,9 +861,22 @@ export default function Page() {
               onExportPdf={handleExportPdf}
               snapshotMetrics={normalizedSnapshot}
               currentMetrics={currentMetrics}
+              snapshots={snapshots}
+              selectedSnapshotId={selectedSnapshotId}
+              onSelectSnapshot={setSelectedSnapshotId}
               onCaptureSnapshot={captureSnapshot}
-              onClearSnapshot={() => setSnapshot(null)}
+              onClearSnapshot={() => {
+                if (!selectedSnapshotId) return;
+                const next = snapshots.filter((s) => s.id !== selectedSnapshotId);
+                setSnapshots(next);
+                setSelectedSnapshotId(next[0]?.id || null);
+                setSnapshot(next[0] || null);
+              }}
               chartRef={chartRef}
+              calendarEvents={calendarEvents}
+              calendarInitialDate={calendarInitialDate}
+              jsonPanels={jsonPanels}
+              sensitivityRows={sensitivityRows}
             />
           </div>
         </div>

@@ -75,9 +75,14 @@ export function ParamsCard({
     if (code === "invalidDdSeq") return state.lang === "zh" ? "回撤序列格式错误，例如 10@6,20@18" : "Invalid drawdown sequence, e.g. 10@6,20@18";
     return code;
   };
+  const isPro = state.uiMode === "pro";
+  const modeLabel = state.lang === "zh" ? "操作模式" : "Workspace Mode";
+  const modeBasic = state.lang === "zh" ? "基础版" : "Basic";
+  const modePro = state.lang === "zh" ? "专业版" : "Pro";
+  const devLabel = state.lang === "zh" ? "开发者数据面板（JSON）" : "Developer Data Panel (JSON)";
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="float-in overflow-hidden border-white/40 bg-card/75 shadow-[0_18px_48px_rgba(12,20,34,0.12)] backdrop-blur-xl dark:border-white/10">
       <CardHeader className="space-y-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl">{t("secParams")}</CardTitle>
@@ -86,6 +91,22 @@ export function ParamsCard({
         <CardDescription>{saveStatus || t("presetLabel")}</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-6">
+        <div className="grid gap-2 rounded-xl border border-border/60 bg-background/70 p-4">
+          <div className="text-xs uppercase text-muted-foreground">{modeLabel}</div>
+          <Tabs value={state.uiMode} onValueChange={(value) => setState((s) => ({ ...s, uiMode: value as "basic" | "pro" }))}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="basic">{modeBasic}</TabsTrigger>
+              <TabsTrigger value="pro">{modePro}</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          {isPro ? (
+            <div className="mt-2 flex items-center justify-between rounded-lg border border-border/60 bg-background/60 px-3 py-2">
+              <span className="text-sm">{devLabel}</span>
+              <Switch checked={state.devMode} onCheckedChange={(checked) => setState((s) => ({ ...s, devMode: checked }))} />
+            </div>
+          ) : null}
+        </div>
+
         <QuickStart presets={PRESETS} onApply={applyQuickPreset} t={t} />
 
         <div className="grid gap-4 rounded-xl border border-dashed border-border/70 bg-muted/40 p-4">
@@ -284,25 +305,27 @@ export function ParamsCard({
 
         {saveStatus ? <div className="text-xs text-muted-foreground">{saveStatus}</div> : null}
 
-        <Separator />
+        {isPro ? (
+          <>
+            <Separator />
 
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-lg font-semibold">{t("secDD")}</div>
-            <div className="text-sm text-muted-foreground">{t("pillDD")}</div>
-          </div>
-          <Badge variant="outline">{t("pillDD")}</Badge>
-        </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-lg font-semibold">{t("secDD")}</div>
+                <div className="text-sm text-muted-foreground">{t("pillDD")}</div>
+              </div>
+              <Badge variant="outline">{t("pillDD")}</Badge>
+            </div>
 
-        <Field label={t("lblEnableDD")} help={t("helpEnableDD")}>
-          <div className="flex items-center justify-between rounded-lg border border-border/60 bg-background/60 px-3 py-2">
-            <span className="text-sm">{t("txtEnableDD")}</span>
-            <Switch checked={state.ddEnabled} onCheckedChange={(checked) => setState((s) => ({ ...s, ddEnabled: checked }))} />
-          </div>
-        </Field>
+            <Field label={t("lblEnableDD")} help={t("helpEnableDD")}>
+              <div className="flex items-center justify-between rounded-lg border border-border/60 bg-background/60 px-3 py-2">
+                <span className="text-sm">{t("txtEnableDD")}</span>
+                <Switch checked={state.ddEnabled} onCheckedChange={(checked) => setState((s) => ({ ...s, ddEnabled: checked }))} />
+              </div>
+            </Field>
 
-        {state.ddEnabled && (
-          <div className="grid gap-4">
+            {state.ddEnabled && (
+              <div className="grid gap-4">
             <Field label={t("lblDDMode")} help={t("helpDDMode")}>
               <Select value={state.ddMode} onValueChange={(value) => setState((s) => ({ ...s, ddMode: value as DdMode }))}>
                 <SelectTrigger>
@@ -418,8 +441,10 @@ export function ParamsCard({
                 </div>
               </>
             )}
-          </div>
-        )}
+              </div>
+            )}
+          </>
+        ) : null}
 
         <Separator />
 
@@ -439,38 +464,42 @@ export function ParamsCard({
         </div>
         <div className="text-xs text-muted-foreground">{t("btnShareHint")}</div>
 
-        <div className="rounded-xl border border-border/60 bg-background/70 p-4 text-xs text-muted-foreground">
-          <div className="font-medium text-foreground">{t("kbTitle")}</div>
-          <div className="mt-2 grid gap-1">
-            <div>{t("kbAltL")}</div>
-            <div>{t("kbAltT")}</div>
-            <div>{t("kbAltR")}</div>
-            <div>{t("kbAltC")}</div>
-            <div>{t("kbAltS")}</div>
-          </div>
-        </div>
-
-        <ScenarioPanel
-          scenarios={scenarios}
-          baseResult={baseResult}
-          lang={state.lang}
-          currency={state.currency}
-          t={t}
-          onSave={onSaveScenario}
-          onRemove={onRemoveScenario}
-        />
-
-        <Accordion type="single" collapsible>
-          <AccordionItem value="details">
-            <AccordionTrigger>{t("detailsSummary")}</AccordionTrigger>
-            <AccordionContent>
-              <div className="table-scroll">
-                <DetailsTable baseResult={baseResult} lang={state.lang} t={t} currency={state.currency} />
+        {isPro ? (
+          <>
+            <div className="rounded-xl border border-border/60 bg-background/70 p-4 text-xs text-muted-foreground">
+              <div className="font-medium text-foreground">{t("kbTitle")}</div>
+              <div className="mt-2 grid gap-1">
+                <div>{t("kbAltL")}</div>
+                <div>{t("kbAltT")}</div>
+                <div>{t("kbAltR")}</div>
+                <div>{t("kbAltC")}</div>
+                <div>{t("kbAltS")}</div>
               </div>
-              <div className="mt-2 text-xs text-muted-foreground">{t("detailsHint")}</div>
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
+            </div>
+
+            <ScenarioPanel
+              scenarios={scenarios}
+              baseResult={baseResult}
+              lang={state.lang}
+              currency={state.currency}
+              t={t}
+              onSave={onSaveScenario}
+              onRemove={onRemoveScenario}
+            />
+
+            <Accordion type="single" collapsible>
+              <AccordionItem value="details">
+                <AccordionTrigger>{t("detailsSummary")}</AccordionTrigger>
+                <AccordionContent>
+                  <div className="table-scroll">
+                    <DetailsTable baseResult={baseResult} lang={state.lang} t={t} currency={state.currency} />
+                  </div>
+                  <div className="mt-2 text-xs text-muted-foreground">{t("detailsHint")}</div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </>
+        ) : null}
       </CardContent>
     </Card>
   );

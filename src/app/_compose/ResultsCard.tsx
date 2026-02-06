@@ -5,9 +5,14 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { CalendarGuide } from "@/app/_components/CalendarGuide";
 import { ChartPanel } from "@/app/_components/ChartPanel";
 import { ExportActions } from "@/app/_components/ExportActions";
+import { GoalPlanner } from "@/app/_components/GoalPlanner";
+import { JsonInspector } from "@/app/_components/JsonInspector";
+import { ScenarioCalendar, type CalendarEventInput } from "@/app/_components/ScenarioCalendar";
 import { MultiSummaryTable, RandomSummaryTable, SingleDrawdownTable } from "@/app/_components/ResultTables";
+import { SensitivityTable, type SensitivityRow } from "@/app/_components/SensitivityTable";
 import { SnapshotCompare } from "@/app/_components/SnapshotCompare";
 import { convertByCurrency, fmtMoney, fmtPct } from "@/lib/utils";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export function ResultsCard({
   t,
@@ -15,6 +20,7 @@ export function ResultsCard({
   state,
   calendars,
   baseResult,
+  months,
   annualizedHint,
   summaryText,
   chartData,
@@ -27,12 +33,19 @@ export function ResultsCard({
   onExportPdf,
   snapshotMetrics,
   currentMetrics,
+  snapshots,
+  selectedSnapshotId,
+  onSelectSnapshot,
   onCaptureSnapshot,
   onClearSnapshot,
   chartRef,
+  calendarEvents,
+  calendarInitialDate,
+  jsonPanels,
+  sensitivityRows,
 }: any) {
   return (
-    <Card className="overflow-hidden bg-gradient-to-br from-primary/10 via-transparent to-accent/20">
+    <Card className="float-in-delay overflow-hidden border-white/40 bg-gradient-to-br from-primary/12 via-background/80 to-accent/30 shadow-[0_18px_48px_rgba(12,20,34,0.12)] dark:border-white/10">
       <CardHeader className="space-y-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-xl">{t("secResult")}</CardTitle>
@@ -56,6 +69,9 @@ export function ResultsCard({
               currency={state.currency}
               current={currentMetrics}
               snapshot={snapshotMetrics}
+              snapshots={snapshots}
+              selectedId={selectedSnapshotId}
+              onSelect={onSelectSnapshot}
               onCapture={onCaptureSnapshot}
               onClear={onClearSnapshot}
             />
@@ -128,7 +144,44 @@ export function ResultsCard({
               chartRef={chartRef}
             />
 
-            {state.ddEnabled && (
+            <div className="rounded-xl border border-border/60 bg-background/70 p-4">
+              <div className="text-xs uppercase text-muted-foreground">{t("insightTitle")}</div>
+              <Tabs defaultValue="calendar" className="mt-3">
+                <TabsList className="flex flex-wrap">
+                  <TabsTrigger value="calendar">{t("insightCalendarTab")}</TabsTrigger>
+                  {state.devMode ? <TabsTrigger value="data">{t("insightDataTab")}</TabsTrigger> : null}
+                </TabsList>
+                <TabsContent value="calendar" className="mt-3">
+                  <ScenarioCalendar
+                    title={t("insightCalendarTitle")}
+                    subtitle={t("insightCalendarSub")}
+                    lang={lang}
+                    events={calendarEvents as CalendarEventInput[]}
+                    initialDate={calendarInitialDate}
+                    emptyText={t("insightCalendarEmpty")}
+                  />
+                </TabsContent>
+                {state.devMode ? (
+                  <TabsContent value="data" className="mt-3">
+                    <JsonInspector title={t("insightDataTitle")} theme={state.theme} panels={jsonPanels} />
+                  </TabsContent>
+                ) : null}
+              </Tabs>
+            </div>
+
+            <GoalPlanner
+              lang={lang}
+              currency={state.currency}
+              simMode={state.simMode}
+              mode={state.mode}
+              principal={state.principal}
+              months={months}
+              monthlyRatePct={state.monthlyRate}
+            />
+
+            <SensitivityTable lang={lang} currency={state.currency} rows={sensitivityRows as SensitivityRow[]} />
+
+            {state.uiMode === "pro" && state.ddEnabled && (
               <div className="grid gap-3 rounded-xl border border-border/60 bg-background/70 p-4">
                 <div className="text-sm font-semibold">
                   {state.ddMode === "single"

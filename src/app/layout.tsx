@@ -24,6 +24,9 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="zh-CN" suppressHydrationWarning>
+      <head>
+        <link rel="stylesheet" href="/dayflow.css" />
+      </head>
       <body className={`${sans.variable} ${display.variable}`}>
         <PageToggleButton />
         <PageFlipTransition>{children}</PageFlipTransition>

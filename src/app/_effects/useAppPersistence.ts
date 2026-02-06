@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 
 import { decodeState, safeJsonParse } from "@/lib/utils";
 import {
@@ -22,7 +22,12 @@ export function useAppPersistence({
   setSaveStatus,
   t,
 }: any) {
-  useEffect(() => {
+  const didHydrateRef = useRef(false);
+
+  useLayoutEffect(() => {
+    if (didHydrateRef.current) return;
+    didHydrateRef.current = true;
+
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = safeJsonParse(raw);

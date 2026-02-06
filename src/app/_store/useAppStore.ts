@@ -27,6 +27,10 @@ type AppStore = {
   setChartMode: (v: ChartMode) => void;
   snapshot: ResultSnapshot | null;
   setSnapshot: (snapshot: ResultSnapshot | null) => void;
+  snapshots: ResultSnapshot[];
+  setSnapshots: (items: ResultSnapshot[]) => void;
+  selectedSnapshotId: string | null;
+  setSelectedSnapshotId: (id: string | null) => void;
 };
 
 export const useAppStore = create<AppStore>((set) => ({
@@ -51,4 +55,8 @@ export const useAppStore = create<AppStore>((set) => ({
   setChartMode: (v) => set({ chartMode: v }),
   snapshot: null,
   setSnapshot: (snapshot) => set({ snapshot }),
+  snapshots: [],
+  setSnapshots: (items) => set({ snapshots: items }),
+  selectedSnapshotId: null,
+  setSelectedSnapshotId: (id) => set({ selectedSnapshotId: id }),
 }));

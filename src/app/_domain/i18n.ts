@@ -30,3 +30,8 @@ export function initI18n(lang: "zh" | "en") {
 export function t(key: string, vars?: Record<string, string | number>) {
   return i18next.t(key, vars as any) as string;
 }
+
+export function getLang() {
+  const lng = i18next.language;
+  return (lng === "en" ? "en" : "zh") as "zh" | "en";
+}
