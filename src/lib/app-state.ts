@@ -1,5 +1,3 @@
-import { setCalendar } from "@/lib/calc";
-
 export const STORAGE_KEY = "ci_settings_v1";
 export const CALENDAR_KEY = "ci_calendars_v1";
 export const SCENARIO_KEY = "ci_scenarios_v1";
@@ -139,10 +137,48 @@ export function getMonths(duration: number, unit: DurationUnit) {
 
 export function sanitizeState(raw: any): AppState {
   if (!raw || typeof raw !== "object") return { ...DEFAULTS };
+
+  const pick = <T extends string>(value: any, allowed: readonly T[], fallback: T): T =>
+    allowed.includes(value) ? (value as T) : fallback;
+  const num = (value: any, fallback: number) => {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : fallback;
+  };
+  const str = (value: any, fallback: string) => (typeof value === "string" ? value : fallback);
+  const bool = (value: any, fallback: boolean) => (typeof value === "boolean" ? value : fallback);
+
   return {
-    ...DEFAULTS,
-    ...raw,
-  } as AppState;
+    lang: pick(raw.lang, ["zh", "en"] as const, DEFAULTS.lang),
+    theme: pick(raw.theme, ["dark", "light"] as const, DEFAULTS.theme),
+    uiMode: pick(raw.uiMode, ["basic", "pro"] as const, DEFAULTS.uiMode),
+    devMode: bool(raw.devMode, DEFAULTS.devMode),
+    simMode: pick(raw.simMode, ["monthly", "tradingDays"] as const, DEFAULTS.simMode),
+    market: pick(raw.market, ["CN", "US"] as const, DEFAULTS.market),
+    startDate: str(raw.startDate, DEFAULTS.startDate),
+    rateMode: pick(raw.rateMode, ["daily", "annual"] as const, DEFAULTS.rateMode),
+    dailyRate: num(raw.dailyRate, DEFAULTS.dailyRate),
+    annualRate: num(raw.annualRate, DEFAULTS.annualRate),
+    principal: num(raw.principal, DEFAULTS.principal),
+    monthlyRate: num(raw.monthlyRate, DEFAULTS.monthlyRate),
+    duration: num(raw.duration, DEFAULTS.duration),
+    durationUnit: pick(raw.durationUnit, ["months", "years"] as const, DEFAULTS.durationUnit),
+    mode: pick(raw.mode, ["compound", "simple"] as const, DEFAULTS.mode),
+    showAnnualized: bool(raw.showAnnualized, DEFAULTS.showAnnualized),
+    ddEnabled: bool(raw.ddEnabled, DEFAULTS.ddEnabled),
+    ddMode: pick(raw.ddMode, ["single", "multi", "random"] as const, DEFAULTS.ddMode),
+    ddList: str(raw.ddList, DEFAULTS.ddList),
+    ddStrategy: pick(raw.ddStrategy, ["worst", "fixed"] as const, DEFAULTS.ddStrategy),
+    ddMonth: num(raw.ddMonth, DEFAULTS.ddMonth),
+    ddSeq: str(raw.ddSeq, DEFAULTS.ddSeq),
+    ddPool: str(raw.ddPool, DEFAULTS.ddPool),
+    randMethod: pick(raw.randMethod, ["prob", "count"] as const, DEFAULTS.randMethod),
+    randProb: num(raw.randProb, DEFAULTS.randProb),
+    randCount: num(raw.randCount, DEFAULTS.randCount),
+    simRuns: num(raw.simRuns, DEFAULTS.simRuns),
+    simSeed: str(raw.simSeed, DEFAULTS.simSeed),
+    currency: pick(raw.currency, ["CNY", "USD"] as const, DEFAULTS.currency),
+    fxRate: num(raw.fxRate, DEFAULTS.fxRate),
+  };
 }
 
 export function serializeCalendars(calendars: any) {
@@ -156,11 +192,44 @@ export function serializeCalendars(calendars: any) {
 }
 
 export function hydrateCalendars(calendars: any, data: any) {
+  const isISODate = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value);
+  const buildYearCountFromISOList = (isoList: string[]) => {
+    const yearCount = new Map<number, number>();
+    for (const iso of isoList) {
+      const y = Number(String(iso).slice(0, 4));
+      if (Number.isFinite(y)) yearCount.set(y, (yearCount.get(y) || 0) + 1);
+    }
+    return yearCount;
+  };
+  const setCalendarLocal = (nextCalendars: any, market: "CN" | "US", dates: string[], source: string) => {
+    const arr = (dates || [])
+      .map(String)
+      .map((d) => d.trim())
+      .filter((d) => isISODate(d));
+    const uniq = Array.from(new Set(arr)).sort();
+    const out = { ...nextCalendars };
+    out[market] = new Set(uniq);
+    out.meta = {
+      ...out.meta,
+      [market]: {
+        count: uniq.length,
+        min: uniq[0] || null,
+        max: uniq[uniq.length - 1] || null,
+        source,
+      },
+    };
+    out.yearCount = {
+      ...out.yearCount,
+      [market]: buildYearCountFromISOList(uniq),
+    };
+    return out;
+  };
+
   let next = { ...calendars };
   if (!data || typeof data !== "object") return next;
   ["CN", "US"].forEach((m) => {
     if (Array.isArray(data[m])) {
-      next = setCalendar(next, m, data[m], "local");
+      next = setCalendarLocal(next, m as "CN" | "US", data[m], "local");
     }
   });
   return next;

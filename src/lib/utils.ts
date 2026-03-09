@@ -1,6 +1,6 @@
 import Decimal from "decimal.js";
 
-import { addMonths, daysDiff, formatNow, toISODate } from "@/app/_domain/date";
+import { addMonths, daysDiff, formatNow, toISODate } from "../app/_domain/date";
 
 export { addMonths, daysDiff, formatNow, toISODate };
 

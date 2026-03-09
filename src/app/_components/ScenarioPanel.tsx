@@ -3,10 +3,11 @@ import { convertAmount, fmtMoney } from "@/lib/utils";
 
 export function ScenarioPanel({ scenarios, baseResult, lang, currency, t, onSave, onRemove }: any) {
   return (
-    <div className="grid gap-3 rounded-xl border border-border/60 bg-background/70 p-4">
+    <div className="action-shell grid gap-3 p-4">
       <div className="flex items-center justify-between">
         <div>
-          <div className="text-sm font-semibold">{t("scenarioTitle")}</div>
+          <div className="section-kicker">{t("scenarioTitle")}</div>
+          <div className="mt-2 text-sm font-semibold">{t("scenarioTitle")}</div>
           <div className="text-xs text-muted-foreground">{t("scenarioSub")}</div>
         </div>
         <Button size="sm" variant="secondary" onClick={onSave} disabled={!baseResult.ok}>
@@ -24,7 +25,7 @@ export function ScenarioPanel({ scenarios, baseResult, lang, currency, t, onSave
             const scenarioProfit = convertAmount(item.result.profit, scenarioCurrency, currency, scenarioFx);
             const diff = baseResult.ok ? baseResult.base.balance - scenarioBalance : 0;
             return (
-              <div key={item.id} className="rounded-lg border border-border/60 bg-background/80 p-3">
+              <div key={item.id} className="rounded-[18px] border border-border/60 bg-background/80 p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <div className="text-sm font-semibold">{item.label}</div>

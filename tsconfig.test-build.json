@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "target": "ES2022",
+    "rootDir": "src",
+    "outDir": ".tmp-test-build/src",
+    "incremental": false
+  },
+  "include": [
+    "src/lib/**/*.ts",
+    "src/app/_domain/date.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

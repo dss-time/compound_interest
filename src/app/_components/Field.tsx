@@ -10,9 +10,9 @@ type FieldProps = {
 
 export function Field({ label, help, children, inline = false, error }: FieldProps) {
   return (
-    <div className={inline ? "grid gap-2" : "grid gap-2"}>
-      <div className="flex items-center gap-2 text-sm font-medium">
-        <span>{label}</span>
+    <div className={inline ? "grid min-w-0 gap-2" : "grid min-w-0 gap-2"}>
+      <div className="flex min-w-0 items-start gap-2 text-sm font-medium">
+        <span className="break-words leading-snug">{label}</span>
         {help ? <HelpTip text={help} /> : null}
       </div>
       {children}

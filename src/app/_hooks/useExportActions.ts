@@ -1,10 +1,15 @@
-import { useCallback } from "react";
-import { toPng } from "html-to-image";
-import type { RefObject } from "react";
+import { useCallback } from 'react';
+import { toPng } from 'html-to-image';
+import type { RefObject } from 'react';
 
-import { buildResultPdf, downloadBlob } from "@/app/_domain/export";
+import { buildResultPdf, downloadBlob } from '@/app/_domain/export';
 
-export function useExportActions({ chartRef, onExportCsv, title, getSummaryLines }: {
+export function useExportActions({
+  chartRef,
+  onExportCsv,
+  title,
+  getSummaryLines,
+}: {
   chartRef: RefObject<HTMLElement | null>;
   onExportCsv: () => void;
   title: string;
@@ -35,7 +40,10 @@ export function useExportActions({ chartRef, onExportCsv, title, getSummaryLines
     });
     const normalized = new Uint8Array(bytes.byteLength);
     normalized.set(bytes);
-    downloadBlob(`${title}.pdf`, new Blob([normalized], { type: "application/pdf" }));
+    downloadBlob(
+      `${title}.pdf`,
+      new Blob([normalized], { type: 'application/pdf' }),
+    );
     return true;
   }, [chartRef, getSummaryLines, title]);
 

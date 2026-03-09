@@ -22,13 +22,13 @@ type AppStore = {
   saveStatus: string;
   setSaveStatus: (v: string) => void;
   scenarios: Scenario[];
-  setScenarios: (s: Scenario[]) => void;
+  setScenarios: (s: Scenario[] | ((prev: Scenario[]) => Scenario[])) => void;
   chartMode: ChartMode;
   setChartMode: (v: ChartMode) => void;
   snapshot: ResultSnapshot | null;
   setSnapshot: (snapshot: ResultSnapshot | null) => void;
   snapshots: ResultSnapshot[];
-  setSnapshots: (items: ResultSnapshot[]) => void;
+  setSnapshots: (items: ResultSnapshot[] | ((prev: ResultSnapshot[]) => ResultSnapshot[])) => void;
   selectedSnapshotId: string | null;
   setSelectedSnapshotId: (id: string | null) => void;
 };
@@ -50,13 +50,13 @@ export const useAppStore = create<AppStore>((set) => ({
   saveStatus: "",
   setSaveStatus: (v) => set({ saveStatus: v }),
   scenarios: [],
-  setScenarios: (s) => set({ scenarios: s }),
+  setScenarios: (s) => set((store) => ({ scenarios: typeof s === "function" ? s(store.scenarios) : s })),
   chartMode: "balance_profit",
   setChartMode: (v) => set({ chartMode: v }),
   snapshot: null,
   setSnapshot: (snapshot) => set({ snapshot }),
   snapshots: [],
-  setSnapshots: (items) => set({ snapshots: items }),
+  setSnapshots: (items) => set((store) => ({ snapshots: typeof items === "function" ? items(store.snapshots) : items })),
   selectedSnapshotId: null,
   setSelectedSnapshotId: (id) => set({ selectedSnapshotId: id }),
 }));

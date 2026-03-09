@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useCallback } from "react";
 
 import { AppHeader } from "@/app/_components/AppHeader";
+import { appToast } from "@/app/_components/AppToaster";
 import { ParamsCard } from "@/app/_compose/ParamsCard";
 import { ResultsCard } from "@/app/_compose/ResultsCard";
 import { PAGE_BG, PAGE_WRAP } from "@/app/_styles/layout";
@@ -14,6 +15,8 @@ import { useDocumentMeta } from "@/app/_effects/useDocumentMeta";
 import { useClock } from "@/app/_hooks/useClock";
 import { useHotkeys } from "@/app/_hooks/useHotkeys";
 import { initI18n, t as translate } from "@/app/_domain/i18n";
+import { type ReadinessItem } from "@/app/_components/ReadinessPanel";
+import { type StrategyBriefItem } from "@/app/_components/StrategyBrief";
 
 import {
   addMonths,
@@ -43,6 +46,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useStateValidation } from "@/app/_hooks/useStateValidation";
 import { useExportActions } from "@/app/_hooks/useExportActions";
 import { buildWorkbookBlob, downloadBlob } from "@/app/_domain/export";
+import { nextThemeFromDomHasDark } from "@/lib/theme";
 
 export default function Page() {
   const {
@@ -79,6 +83,18 @@ export default function Page() {
 
   const t = useCallback((key: string, vars?: Record<string, string | number>) => translate(key, vars), [lang]);
 
+  const pushNotice = useCallback(
+    (
+      tone: "success" | "error" | "info",
+      title: string,
+      message: string,
+      options?: { actionLabel?: string; onAction?: () => void }
+    ) => {
+      appToast(tone, title, message, { actionLabel: options?.actionLabel, onAction: options?.onAction });
+    },
+    []
+  );
+
   useDocumentMeta(state.lang, state.theme);
   useAutoStartDate(state.simMode, state.startDate, setState);
   useAppPersistence({
@@ -96,10 +112,17 @@ export default function Page() {
   const nowText = useClock(state.lang);
   const validationErrors = useStateValidation(state);
   const chartRef = useRef<HTMLDivElement | null>(null);
+  const paramsRef = useRef<HTMLDivElement | null>(null);
+  const resultsRef = useRef<HTMLDivElement | null>(null);
+  const compareRef = useRef<HTMLDivElement | null>(null);
 
   const months = getMonths(state.duration, state.durationUnit);
   const hasValidationErrors = useMemo(
     () => Object.values(validationErrors).some(Boolean),
+    [validationErrors]
+  );
+  const validationIssueCount = useMemo(
+    () => Object.values(validationErrors).filter(Boolean).length,
     [validationErrors]
   );
 
@@ -326,6 +349,233 @@ export default function Page() {
       end: extra?.endISO ? toISODate(new Date(new Date(extra.endISO).getTime() - 86400000)) : "-",
     });
   }, [baseResult, lang, state.duration, state.durationUnit, state.simMode, state.currency, t]);
+
+  const activeRateError =
+    state.simMode === "monthly"
+      ? validationErrors.monthlyRate
+      : state.rateMode === "daily"
+      ? validationErrors.dailyRate
+      : validationErrors.annualRate;
+
+  const readinessItems = useMemo<ReadinessItem[]>(() => {
+    const coreReady =
+      !validationErrors.principal &&
+      !validationErrors.duration &&
+      !validationErrors.fxRate &&
+      !activeRateError;
+
+    const windowReady = state.simMode === "monthly" ? months > 0 : Boolean(state.startDate) && months > 0;
+
+    const calendarMeta = calendars.meta[state.market];
+    const calendarReady =
+      state.simMode === "monthly"
+        ? { status: "done" as const, detail: t("readinessCalendarMonthly") }
+        : !calendarMeta?.count
+        ? { status: "pending" as const, detail: t("readinessCalendarMissing") }
+        : calendarBanner
+        ? { status: "warning" as const, detail: calendarBanner }
+        : {
+            status: "done" as const,
+            detail: t("readinessCalendarReadyTpl", {
+              market: state.market === "CN" ? t("calImportedCN") : t("calImportedUS"),
+              count: String(calendarMeta.count),
+            }),
+          };
+
+    const riskConfigReady =
+      state.uiMode !== "pro" || !state.ddEnabled
+        ? { status: "done" as const, detail: t("readinessRiskDisabled") }
+        : state.ddMode === "single" && (validationErrors.ddList || (state.ddStrategy === "fixed" && validationErrors.ddMonth))
+        ? { status: "pending" as const, detail: t("readinessRiskPending") }
+        : state.ddMode === "multi" && validationErrors.ddSeq
+        ? { status: "pending" as const, detail: t("readinessRiskPending") }
+        : state.ddMode === "random" &&
+          (validationErrors.ddPool ||
+            validationErrors.randProb ||
+            validationErrors.randCount ||
+            validationErrors.simRuns)
+        ? { status: "pending" as const, detail: t("readinessRiskPending") }
+        : { status: "done" as const, detail: t("readinessRiskReady") };
+
+    return [
+      {
+        id: "core",
+        title: t("readinessItemCore"),
+        detail: coreReady
+          ? t("readinessCoreReadyTpl", {
+              principal: fmtMoney(lang, state.currency, state.principal),
+              months: String(months),
+            })
+          : t("readinessCorePending"),
+        status: coreReady ? "done" : "pending",
+        statusLabel: coreReady ? t("readinessStatusDone") : t("readinessStatusPending"),
+      },
+      {
+        id: "window",
+        title: t("readinessItemWindow"),
+        detail:
+          state.simMode === "monthly"
+            ? t("readinessWindowMonthly")
+            : windowReady
+            ? t("readinessWindowReadyTpl", { start: state.startDate, months: String(months) })
+            : t("readinessWindowPending"),
+        status: windowReady ? "done" : "pending",
+        statusLabel: windowReady ? t("readinessStatusDone") : t("readinessStatusPending"),
+      },
+      {
+        id: "calendar",
+        title: t("readinessItemCalendar"),
+        detail: calendarReady.detail,
+        status: calendarReady.status,
+        statusLabel:
+          calendarReady.status === "done"
+            ? t("readinessStatusDone")
+            : calendarReady.status === "warning"
+            ? t("readinessStatusWarning")
+            : t("readinessStatusPending"),
+      },
+      {
+        id: "risk",
+        title: t("readinessItemRisk"),
+        detail: riskConfigReady.detail,
+        status: riskConfigReady.status,
+        statusLabel: riskConfigReady.status === "done" ? t("readinessStatusDone") : t("readinessStatusPending"),
+      },
+    ];
+  }, [
+    validationErrors,
+    activeRateError,
+    state.simMode,
+    state.rateMode,
+    state.uiMode,
+    state.ddEnabled,
+    state.ddMode,
+    state.ddStrategy,
+    state.startDate,
+    state.market,
+    state.currency,
+    state.principal,
+    months,
+    calendarBanner,
+    calendars,
+    t,
+    lang,
+  ]);
+
+  const readinessSummary = useMemo(() => {
+    const doneCount = readinessItems.filter((item) => item.status === "done").length;
+    return t("readinessSummaryTpl", { done: String(doneCount), total: String(readinessItems.length) });
+  }, [readinessItems, t]);
+
+  const readinessPrimaryAction = useMemo(() => {
+    if (validationIssueCount > 0) {
+      return t("readinessPrimaryFixTpl", { count: String(validationIssueCount) });
+    }
+    if (state.simMode === "tradingDays" && !state.startDate) {
+      return t("blockingSetStartDate");
+    }
+    if (state.simMode === "tradingDays" && !calendars.meta[state.market]?.count) {
+      return t("readinessPrimaryImportCalendar");
+    }
+    if (state.simMode === "tradingDays" && calendarBanner) {
+      return t("readinessPrimaryCoverage");
+    }
+    return t("readinessPrimaryReady");
+  }, [validationIssueCount, state.simMode, state.startDate, state.market, calendars, calendarBanner, t]);
+
+  const strategyBriefItems = useMemo<StrategyBriefItem[]>(() => {
+    const simulationValue =
+      state.simMode === "monthly"
+        ? t("optSimMonthly")
+        : `${t("optSimTradingDays")} · ${state.market === "CN" ? t("optMarketCN") : t("optMarketUS")}`;
+    const returnValue =
+      state.simMode === "monthly"
+        ? t("strategyReturnMonthlyTpl", { rate: Number(state.monthlyRate).toFixed(2) })
+        : state.rateMode === "daily"
+        ? t("strategyReturnDailyTpl", { rate: Number(state.dailyRate).toFixed(4) })
+        : t("strategyReturnAnnualTpl", { rate: Number(state.annualRate).toFixed(2) });
+    const riskValue =
+      state.uiMode !== "pro" || !state.ddEnabled
+        ? t("strategyRiskOff")
+        : state.ddMode === "single"
+        ? t("optDDSingle")
+        : state.ddMode === "multi"
+        ? t("optDDMulti")
+        : t("optDDRandom");
+
+    return [
+      {
+        id: "simulation",
+        label: t("strategyLabelSimulation"),
+        value: simulationValue,
+        detail:
+          state.simMode === "monthly"
+            ? t("strategySimMonthlyDetail")
+            : t("strategySimTradingDetailTpl", {
+                start: state.startDate || toISODate(new Date()),
+                market: state.market === "CN" ? t("optMarketCN") : t("optMarketUS"),
+              }),
+      },
+      {
+        id: "return",
+        label: t("strategyLabelReturn"),
+        value: returnValue,
+        detail: state.mode === "compound" ? t("optCompound") : t("optSimple"),
+      },
+      {
+        id: "duration",
+        label: t("strategyLabelDuration"),
+        value: `${months} ${t("optUnitMonths")}`,
+        detail: t("strategyDurationDetailTpl", {
+          duration: String(state.duration),
+          unit: state.durationUnit === "years" ? t("optUnitYears") : t("optUnitMonths"),
+          months: String(months),
+        }),
+      },
+      {
+        id: "capital",
+        label: t("strategyLabelCapital"),
+        value: fmtMoney(lang, state.currency, state.principal),
+        detail: t("strategyCapitalDetailTpl", {
+          currency: state.currency,
+          mode: state.mode === "compound" ? t("optCompound") : t("optSimple"),
+        }),
+      },
+      {
+        id: "risk",
+        label: t("strategyLabelRisk"),
+        value: riskValue,
+        detail:
+          state.uiMode !== "pro" || !state.ddEnabled
+            ? t("strategyRiskOff")
+            : t("strategyRiskOnTpl", {
+                mode: riskValue,
+              }),
+      },
+    ];
+  }, [state, months, t, lang]);
+
+  const blockingActions = useMemo(() => {
+    const actions: string[] = [];
+    if (validationIssueCount > 0) {
+      actions.push(t("blockingFixValidationTpl", { count: String(validationIssueCount) }));
+    }
+    if (state.simMode === "tradingDays" && !state.startDate) {
+      actions.push(t("blockingSetStartDate"));
+    }
+    if (months <= 0) {
+      actions.push(t("blockingSetDuration"));
+    }
+    if (state.simMode === "tradingDays" && !calendars.meta[state.market]?.count) {
+      actions.push(t("blockingImportCalendar"));
+    } else if (state.simMode === "tradingDays" && calendarBanner) {
+      actions.push(t("blockingCoverage"));
+    }
+    if (!actions.length && !baseResult.ok) {
+      actions.push(t("blockingReviewError"));
+    }
+    return Array.from(new Set(actions));
+  }, [validationIssueCount, state.simMode, state.startDate, state.market, months, calendars, calendarBanner, baseResult, t]);
 
   const chartData = useMemo(() => {
     if (!baseResult.ok) return [];
@@ -585,6 +835,7 @@ export default function Page() {
     setSnapshot(snap);
     setSnapshots([snap, ...snapshots].slice(0, 5));
     setSelectedSnapshotId(snap.id);
+    pushNotice("success", t("noticeSnapshotSavedTitle"), t("noticeSnapshotSavedSub"));
   }, [
     baseResult,
     chartData,
@@ -595,6 +846,8 @@ export default function Page() {
     snapshots,
     setSnapshots,
     setSelectedSnapshotId,
+    pushNotice,
+    t,
   ]);
 
   const exportCsv = useCallback(() => {
@@ -627,6 +880,41 @@ export default function Page() {
     title: "compound-interest-result",
     getSummaryLines: getPdfSummaryLines,
   });
+
+  const exportCsvWithNotice = useCallback(() => {
+    try {
+      handleExportCsv();
+      pushNotice("success", t("noticeSuccessTitle"), state.lang === "zh" ? "CSV 已导出到本地。" : "CSV was exported locally.");
+    } catch (error) {
+      pushNotice("error", t("noticeErrorTitle"), state.lang === "zh" ? "CSV 导出失败，请重试。" : "CSV export failed. Please try again.");
+    }
+  }, [handleExportCsv, pushNotice, state.lang, t]);
+
+  const exportPngWithNotice = useCallback(async () => {
+    try {
+      const ok = await handleExportPng();
+      if (ok) {
+        pushNotice("success", t("noticeSuccessTitle"), state.lang === "zh" ? "PNG 已导出到本地。" : "PNG was exported locally.");
+        return;
+      }
+      pushNotice("error", t("noticeErrorTitle"), state.lang === "zh" ? "当前图表还不能导出 PNG。" : "The current chart cannot be exported as PNG yet.");
+    } catch (error) {
+      pushNotice("error", t("noticeErrorTitle"), state.lang === "zh" ? "PNG 导出失败，请重试。" : "PNG export failed. Please try again.");
+    }
+  }, [handleExportPng, pushNotice, state.lang, t]);
+
+  const exportPdfWithNotice = useCallback(async () => {
+    try {
+      const ok = await handleExportPdf();
+      if (ok) {
+        pushNotice("success", t("noticeSuccessTitle"), state.lang === "zh" ? "PDF 已导出到本地。" : "PDF was exported locally.");
+        return;
+      }
+      pushNotice("error", t("noticeErrorTitle"), state.lang === "zh" ? "当前结果还不能导出 PDF。" : "The current result cannot be exported as PDF yet.");
+    } catch (error) {
+      pushNotice("error", t("noticeErrorTitle"), state.lang === "zh" ? "PDF 导出失败，请重试。" : "PDF export failed. Please try again.");
+    }
+  }, [handleExportPdf, pushNotice, state.lang, t]);
 
   const resetToDemo = () => {
     setState((s) => ({ ...DEFAULTS, lang: s.lang, theme: s.theme }));
@@ -673,10 +961,21 @@ export default function Page() {
       },
     };
     setScenarios([next, ...scenarios].slice(0, 6));
+    pushNotice("success", t("noticeScenarioSavedTitle"), t("noticeScenarioSavedSub"));
   };
 
   const removeScenario = (id: string) => {
-    setScenarios(scenarios.filter((s) => s.id !== id));
+    const removed = scenarios.find((s) => s.id === id);
+    if (!removed) return;
+    setScenarios((prev) => prev.filter((s) => s.id !== id));
+    pushNotice("info", t("noticeScenarioRemovedTitle"), t("noticeScenarioRemovedSub"), {
+      actionLabel: t("noticeUndo"),
+      onAction: () =>
+        setScenarios((prev) => {
+          if (prev.some((s) => s.id === removed.id)) return prev;
+          return [removed, ...prev].slice(0, 6);
+        }),
+    });
   };
 
   const buildCopyText = () => {
@@ -748,8 +1047,9 @@ export default function Page() {
     if (ok) {
       setCopyLabel(t("copyBtnCopied"));
       setTimeout(() => setCopyLabel(null), 900);
+      pushNotice("success", t("noticeSuccessTitle"), t("noticeCopySub"));
     } else {
-      alert(t("copyFail"));
+      pushNotice("error", t("noticeErrorTitle"), t("noticeClipboardBlocked"));
     }
   };
 
@@ -762,8 +1062,17 @@ export default function Page() {
     if (ok) {
       setShareLabel(t("shareBtnCopied"));
       setTimeout(() => setShareLabel(null), 900);
+      pushNotice(
+        "success",
+        t("noticeSuccessTitle"),
+        state.simMode === "tradingDays"
+          ? t("noticeShareTradingSubTpl", {
+              market: state.market === "CN" ? t("optMarketCN") : t("optMarketUS"),
+            })
+          : t("noticeShareSub")
+      );
     } else {
-      alert(t("copyFail"));
+      pushNotice("error", t("noticeErrorTitle"), t("noticeClipboardBlocked"));
     }
   };
 
@@ -773,7 +1082,7 @@ export default function Page() {
       const raw = await file.text();
       const res = parseCalendarJSON(raw, state.market, t);
       if (!res.ok) {
-        alert(res.error || t("alertCalReadFail"));
+        pushNotice("error", t("noticeErrorTitle"), res.error || t("noticeCalendarFailedSub"));
         return;
       }
       let next = calendars;
@@ -781,22 +1090,64 @@ export default function Page() {
         next = setCalendar(next, u.market, u.dates, "import");
       });
       setCalendars(next);
+      const summary = res.updates
+        .map((u: any) => {
+          const meta = next.meta[u.market];
+          const marketLabel = u.market === "CN" ? t("optMarketCN") : t("optMarketUS");
+          return t("noticeCalendarItemTpl", { market: marketLabel, count: String(meta?.count || 0) });
+        })
+        .join(" / ");
+      pushNotice("success", t("noticeCalendarImportedTitle"), t("noticeCalendarImportedSubTpl", { summary }));
     } catch (e) {
-      alert(t("alertCalReadFail"));
+      pushNotice("error", t("noticeErrorTitle"), t("noticeCalendarFailedSub"));
     }
   };
 
   const onToggleTheme = () => {
-    setState((s) => {
-      const nextTheme = s.theme === "dark" ? "light" : "dark";
-      document.documentElement.classList.toggle("dark", nextTheme === "dark");
-      return { ...s, theme: nextTheme };
-    });
+    const isDark = document.documentElement.classList.contains("dark");
+    const nextTheme = nextThemeFromDomHasDark(isDark);
+    document.documentElement.classList.toggle("dark", nextTheme === "dark");
+    document.documentElement.dataset.theme = nextTheme;
+    setState((s) => ({ ...s, theme: nextTheme }));
   };
 
   const onToggleLang = () => {
     setState((s) => ({ ...s, lang: s.lang === "zh" ? "en" : "zh" }));
   };
+
+  const focusResults = useCallback(() => {
+    resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+
+  const focusParams = useCallback(() => {
+    paramsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+
+  const focusCompare = useCallback(() => {
+    compareRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+
+  const clearSnapshot = useCallback(() => {
+    if (!selectedSnapshotId) return;
+    const removed = snapshots.find((s) => s.id === selectedSnapshotId);
+    if (!removed) return;
+
+    const next = snapshots.filter((s) => s.id !== selectedSnapshotId);
+    setSnapshots(next);
+    setSelectedSnapshotId(next[0]?.id || null);
+    setSnapshot(next[0] || null);
+    pushNotice("info", t("noticeSnapshotRemovedTitle"), t("noticeSnapshotRemovedSub"), {
+      actionLabel: t("noticeUndo"),
+      onAction: () => {
+        setSnapshots((prev) => {
+          if (prev.some((item) => item.id === removed.id)) return prev;
+          return [removed, ...prev].slice(0, 5);
+        });
+        setSelectedSnapshotId(removed.id);
+        setSnapshot(removed);
+      },
+    });
+  }, [selectedSnapshotId, snapshots, setSnapshots, setSelectedSnapshotId, setSnapshot, pushNotice, t]);
 
   useHotkeys({
     onToggleLang,
@@ -817,67 +1168,79 @@ export default function Page() {
             t={t}
             onToggleTheme={onToggleTheme}
             onToggleLang={onToggleLang}
+            onJumpCalc={focusParams}
+            onJumpTrend={focusResults}
+            onJumpCompare={focusCompare}
           />
-          <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-            <ParamsCard
-              t={t}
-              state={state}
-              setState={setState}
-              presetId={presetId}
-              setPresetId={setPresetId}
-              saveStatus={saveStatus}
-              applyPreset={applyPreset}
-              applyQuickPreset={applyQuickPreset}
-              onCalendarImport={onCalendarImport}
-              calendarStatus={calendarStatus}
-              calendarBanner={calendarBanner}
-              resetToDemo={resetToDemo}
-              handleCopy={handleCopy}
-              handleShare={handleShare}
-              copyLabel={copyLabel}
-              shareLabel={shareLabel}
-              scenarios={scenarios}
-              baseResult={baseResult}
-              onSaveScenario={saveScenario}
-              onRemoveScenario={removeScenario}
-              validationErrors={validationErrors}
-            />
-            <ResultsCard
-              t={t}
-              lang={state.lang}
-              state={state}
-              calendars={calendars}
-              baseResult={baseResult}
-              months={months}
-              annualizedHint={annualizedHint}
-              summaryText={summaryText}
-              chartData={chartData}
-              snapshotChartData={normalizedSnapshot?.chartData || []}
-              chartMode={chartMode}
-              onChartModeChange={setChartMode}
-              ddResult={ddResult}
-              onExportCsv={handleExportCsv}
-              onExportPng={handleExportPng}
-              onExportPdf={handleExportPdf}
-              snapshotMetrics={normalizedSnapshot}
-              currentMetrics={currentMetrics}
-              snapshots={snapshots}
-              selectedSnapshotId={selectedSnapshotId}
-              onSelectSnapshot={setSelectedSnapshotId}
-              onCaptureSnapshot={captureSnapshot}
-              onClearSnapshot={() => {
-                if (!selectedSnapshotId) return;
-                const next = snapshots.filter((s) => s.id !== selectedSnapshotId);
-                setSnapshots(next);
-                setSelectedSnapshotId(next[0]?.id || null);
-                setSnapshot(next[0] || null);
-              }}
-              chartRef={chartRef}
-              calendarEvents={calendarEvents}
-              calendarInitialDate={calendarInitialDate}
-              jsonPanels={jsonPanels}
-              sensitivityRows={sensitivityRows}
-            />
+          <div className="grid gap-6 xl:grid-cols-[minmax(0,0.94fr)_minmax(0,1.06fr)] xl:gap-7">
+            <div ref={paramsRef}>
+              <ParamsCard
+                t={t}
+                state={state}
+                setState={setState}
+                presetId={presetId}
+                setPresetId={setPresetId}
+                saveStatus={saveStatus}
+                applyPreset={applyPreset}
+                applyQuickPreset={applyQuickPreset}
+                onCalendarImport={onCalendarImport}
+                calendarStatus={calendarStatus}
+                calendarBanner={calendarBanner}
+                resetToDemo={resetToDemo}
+                focusResults={focusResults}
+                handleCopy={handleCopy}
+                handleShare={handleShare}
+                copyLabel={copyLabel}
+                shareLabel={shareLabel}
+                readinessTitle={t("readinessTitle")}
+                readinessSubtitle={t("readinessSub")}
+                readinessSummary={readinessSummary}
+                readinessPrimaryAction={readinessPrimaryAction}
+                readinessItems={readinessItems}
+                scenarios={scenarios}
+                baseResult={baseResult}
+                onSaveScenario={saveScenario}
+                onRemoveScenario={removeScenario}
+                validationErrors={validationErrors}
+              />
+            </div>
+            <div ref={resultsRef}>
+              <ResultsCard
+                t={t}
+                lang={state.lang}
+                state={state}
+                calendars={calendars}
+                baseResult={baseResult}
+                strategyBriefTitle={t("strategyBriefTitle")}
+                strategyBriefSubtitle={t("strategyBriefSub")}
+                strategyBriefItems={strategyBriefItems}
+                blockingActions={blockingActions}
+                months={months}
+                annualizedHint={annualizedHint}
+                summaryText={summaryText}
+                chartData={chartData}
+                snapshotChartData={normalizedSnapshot?.chartData || []}
+                chartMode={chartMode}
+                onChartModeChange={setChartMode}
+                ddResult={ddResult}
+                onExportCsv={exportCsvWithNotice}
+                onExportPng={exportPngWithNotice}
+                onExportPdf={exportPdfWithNotice}
+                snapshotMetrics={normalizedSnapshot}
+                currentMetrics={currentMetrics}
+                snapshots={snapshots}
+                selectedSnapshotId={selectedSnapshotId}
+                onSelectSnapshot={setSelectedSnapshotId}
+                onCaptureSnapshot={captureSnapshot}
+                onClearSnapshot={clearSnapshot}
+                chartRef={chartRef}
+                calendarEvents={calendarEvents}
+                calendarInitialDate={calendarInitialDate}
+                jsonPanels={jsonPanels}
+                sensitivityRows={sensitivityRows}
+                compareSectionRef={compareRef}
+              />
+            </div>
           </div>
         </div>
       </main>

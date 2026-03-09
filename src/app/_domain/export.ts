@@ -1,23 +1,25 @@
-import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
-import * as XLSX from "xlsx";
+import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+import * as XLSX from 'xlsx';
 
 export function downloadBlob(filename: string, blob: Blob) {
   const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
+  const anchor = document.createElement('a');
   anchor.href = url;
   anchor.download = filename;
   anchor.click();
   URL.revokeObjectURL(url);
 }
 
-export function buildWorkbookBlob(sheets: Array<{ name: string; rows: Array<Record<string, unknown>> }>) {
+export function buildWorkbookBlob(
+  sheets: Array<{ name: string; rows: Array<Record<string, unknown>> }>,
+) {
   const book = XLSX.utils.book_new();
   sheets.forEach((sheet) => {
     const ws = XLSX.utils.json_to_sheet(sheet.rows);
     XLSX.utils.book_append_sheet(book, ws, sheet.name);
   });
-  const bytes = XLSX.write(book, { type: "array", bookType: "csv" });
-  return new Blob([bytes], { type: "text/csv;charset=utf-8;" });
+  const bytes = XLSX.write(book, { type: 'array', bookType: 'csv' });
+  return new Blob([bytes], { type: 'text/csv;charset=utf-8;' });
 }
 
 export async function buildResultPdf(params: {
@@ -53,7 +55,9 @@ export async function buildResultPdf(params: {
   });
 
   if (params.chartPngDataUrl) {
-    const pngBytes = await fetch(params.chartPngDataUrl).then((r) => r.arrayBuffer());
+    const pngBytes = await fetch(params.chartPngDataUrl).then((r) =>
+      r.arrayBuffer(),
+    );
     const png = await pdf.embedPng(pngBytes);
     const maxW = 470;
     const maxH = 460;

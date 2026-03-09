@@ -39,6 +39,7 @@ logs/
 # Coverage / test output
 coverage/
 .nyc_output/
+.tmp-test-build/
 
 # IDE/editor
 .idea/
