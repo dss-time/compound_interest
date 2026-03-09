@@ -17,6 +17,7 @@ export function ScenarioCalendar({
   title,
   subtitle,
   lang,
+  theme,
   events,
   initialDate,
   emptyText,
@@ -24,6 +25,7 @@ export function ScenarioCalendar({
   title: string;
   subtitle?: string;
   lang: "zh" | "en";
+  theme: "dark" | "light";
   events: CalendarEventInput[];
   initialDate: Date;
   emptyText: string;
@@ -51,6 +53,9 @@ export function ScenarioCalendar({
     events: dayflowEvents,
     defaultView: ViewType.MONTH,
     initialDate,
+    theme: {
+      mode: theme,
+    },
   });
 
   const timeline = useMemo(() => [...events].sort((a, b) => a.start.getTime() - b.start.getTime()), [events]);

@@ -193,6 +193,7 @@ export function ResultsCard({
                     title={t("insightCalendarTitle")}
                     subtitle={t("insightCalendarSub")}
                     lang={lang}
+                    theme={state.theme}
                     events={calendarEvents as CalendarEventInput[]}
                     initialDate={calendarInitialDate}
                     emptyText={t("insightCalendarEmpty")}

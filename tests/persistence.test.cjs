@@ -10,19 +10,19 @@ test("buildHydratedStatePatch returns null for empty sources", () => {
 
 test("buildHydratedStatePatch hydrates from storage", () => {
   const patch = buildHydratedStatePatch({ theme: "light", lang: "en" }, null);
-  assert.equal(patch.theme, "light");
-  assert.equal(patch.lang, "en");
+  assert.equal(patch.theme, undefined);
+  assert.equal(patch.lang, undefined);
   assert.equal(patch.currency, DEFAULTS.currency);
 });
 
-test("buildHydratedStatePatch lets share override storage", () => {
+test("buildHydratedStatePatch never lets storage or share override lang/theme", () => {
   const patch = buildHydratedStatePatch({ theme: "light", lang: "zh" }, { theme: "dark", lang: "en" });
-  assert.equal(patch.theme, "dark");
-  assert.equal(patch.lang, "en");
+  assert.equal(patch.theme, undefined);
+  assert.equal(patch.lang, undefined);
 });
 
-test("buildHydratedStatePatch sanitizes invalid source values", () => {
+test("buildHydratedStatePatch sanitizes non-meta source values", () => {
   const patch = buildHydratedStatePatch({ theme: "invalid", currency: "EUR" }, null);
-  assert.equal(patch.theme, "dark");
+  assert.equal(patch.theme, undefined);
   assert.equal(patch.currency, "CNY");
 });

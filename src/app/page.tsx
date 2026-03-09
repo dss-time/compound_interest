@@ -11,7 +11,6 @@ import { type CalendarEventInput } from "@/app/_components/ScenarioCalendar";
 import { useAppStore } from "@/app/_store/useAppStore";
 import { useAppPersistence } from "@/app/_effects/useAppPersistence";
 import { useAutoStartDate } from "@/app/_effects/useAutoStartDate";
-import { useDocumentMeta } from "@/app/_effects/useDocumentMeta";
 import { useClock } from "@/app/_hooks/useClock";
 import { useHotkeys } from "@/app/_hooks/useHotkeys";
 import { initI18n, t as translate } from "@/app/_domain/i18n";
@@ -46,7 +45,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useStateValidation } from "@/app/_hooks/useStateValidation";
 import { useExportActions } from "@/app/_hooks/useExportActions";
 import { buildWorkbookBlob, downloadBlob } from "@/app/_domain/export";
-import { nextThemeFromDomHasDark } from "@/lib/theme";
+import { nextThemeFromCurrent } from "@/lib/theme";
 
 export default function Page() {
   const {
@@ -95,7 +94,6 @@ export default function Page() {
     []
   );
 
-  useDocumentMeta(state.lang, state.theme);
   useAutoStartDate(state.simMode, state.startDate, setState);
   useAppPersistence({
     state,
@@ -1104,11 +1102,7 @@ export default function Page() {
   };
 
   const onToggleTheme = () => {
-    const isDark = document.documentElement.classList.contains("dark");
-    const nextTheme = nextThemeFromDomHasDark(isDark);
-    document.documentElement.classList.toggle("dark", nextTheme === "dark");
-    document.documentElement.dataset.theme = nextTheme;
-    setState((s) => ({ ...s, theme: nextTheme }));
+    setState((s) => ({ ...s, theme: nextThemeFromCurrent(s.theme) }));
   };
 
   const onToggleLang = () => {

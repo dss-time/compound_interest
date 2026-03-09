@@ -1,8 +1,9 @@
 import { create } from "zustand";
 
-import { AppState, DEFAULTS, Scenario, ChartMode, ResultSnapshot } from "@/lib/app-state";
+import { AppState, DEFAULTS, Scenario, ChartMode, ResultSnapshot, STORAGE_KEY, sanitizeState } from "@/lib/app-state";
 import { PRESETS } from "@/lib/presets";
 import { initCalendars } from "@/lib/calc";
+import { safeJsonParse } from "@/lib/utils";
 
 type AppStore = {
   state: AppState;
@@ -33,8 +34,38 @@ type AppStore = {
   setSelectedSnapshotId: (id: string | null) => void;
 };
 
+function getInitialAppState(): AppState {
+  if (typeof window === "undefined") return { ...DEFAULTS };
+  const domTheme =
+    document.documentElement.dataset.theme === "light" || !document.documentElement.classList.contains("dark") ? "light" : "dark";
+  const domLang = document.documentElement.lang.toLowerCase().startsWith("en") ? "en" : "zh";
+
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = safeJsonParse(raw);
+      if (parsed.ok) {
+        const next = sanitizeState(parsed.data);
+        return {
+          ...next,
+          lang: domLang,
+          theme: domTheme,
+        };
+      }
+    }
+  } catch {
+    // Fall through to DOM-derived defaults.
+  }
+
+  return {
+    ...DEFAULTS,
+    theme: domTheme,
+    lang: domLang,
+  };
+}
+
 export const useAppStore = create<AppStore>((set) => ({
-  state: { ...DEFAULTS },
+  state: getInitialAppState(),
   setState: (updater) => set((store) => ({ state: updater(store.state) })),
   calendars: initCalendars(),
   setCalendars: (c) =>

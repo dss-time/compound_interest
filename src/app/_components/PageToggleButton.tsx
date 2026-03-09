@@ -12,15 +12,17 @@ export function PageToggleButton() {
   const toOptions = pathname !== "/options";
   const lang = useDocumentLang();
   const label = lang === "en" ? (toOptions ? "Go to Options" : "Go to Planner") : toOptions ? "切换到期权策略" : "切换到复利规划";
+  const target = toOptions ? "/options" : "/";
 
   return (
-    <div className="sticky top-3 z-50 mx-auto flex w-full max-w-6xl justify-end px-4">
+    <div className="fixed left-4 top-4 z-[90]">
       <Link
-        href={toOptions ? "/options" : "/"}
+        href={target}
         aria-label={label}
         className={cn(
           "inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/82 px-4 py-2 text-sm",
-          "text-secondary-foreground shadow-[0_12px_30px_rgba(15,23,42,0.10)] backdrop-blur-xl transition hover:-translate-y-0.5 hover:bg-background/92"
+          "text-secondary-foreground shadow-[0_12px_30px_rgba(15,23,42,0.10)] backdrop-blur-xl transition hover:-translate-y-0.5 hover:bg-background/92",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         )}
       >
         <ArrowLeftRight className="h-4 w-4" />
