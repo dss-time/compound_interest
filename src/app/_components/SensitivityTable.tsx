@@ -20,7 +20,12 @@ export function SensitivityTable({
   if (!rows.length) return null;
   return (
     <div className="grid gap-3 rounded-xl border border-border/60 bg-background/70 p-4">
-      <div className="text-xs uppercase text-muted-foreground">{lang === "zh" ? "敏感性分析" : "Sensitivity Analysis"}</div>
+      <div>
+        <div className="text-base font-semibold text-foreground">{lang === "zh" ? "敏感性分析" : "Sensitivity Analysis"}</div>
+        <div className="mt-1 text-sm text-muted-foreground">
+          {lang === "zh" ? "查看收益率变化对结果的影响区间。" : "Inspect how return shifts change the outcome range."}
+        </div>
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>

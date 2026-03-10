@@ -27,11 +27,13 @@ export function ExportActions({
   return (
     <div className="action-shell grid gap-3 p-4">
       <div>
-        <div className="section-kicker">{label}</div>
-        <div className="mt-2 text-sm font-semibold text-foreground">{label}</div>
+        <div className="text-base font-semibold text-foreground">{label}</div>
+        <div className="mt-1 text-sm text-muted-foreground">
+          {lang === "zh" ? "导出当前结果视图，便于发送、存档或复盘。" : "Export the current result view for sharing, archiving, or review."}
+        </div>
       </div>
       <div className="rounded-[18px] border border-border/60 bg-background/70 p-2">
-        <div className="mb-2 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{formatLabel}</div>
+        <div className="mb-2 px-1 text-xs text-muted-foreground">{formatLabel}</div>
         <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
           {(["csv", "png", "pdf"] as const).map((value) => (
             <button
@@ -53,9 +55,7 @@ export function ExportActions({
           </Button>
         </div>
       </div>
-      <div className="text-xs text-muted-foreground">
-        {lang === "zh" ? "导出当前可见结果，适合发给客户或归档。" : "Export the current visible result for clients or archives."}
-      </div>
+      <div className="text-xs text-muted-foreground">{lang === "zh" ? "支持导出表格、图片和 PDF。" : "Supports table, image, and PDF exports."}</div>
     </div>
   );
 }

@@ -27,13 +27,13 @@ export function AppHeader({
   onJumpCompare,
 }: AppHeaderProps) {
   const brand = lang === "zh" ? "复利收益规划器" : "Compound Interest Planner";
-  const liveLabel = lang === "zh" ? "简单清晰的收益测算" : "Clean and clear return planning";
+  const liveLabel = lang === "zh" ? "简单清晰的收益测算" : "Clean, calm return planning";
   const heroTitle = lang === "zh" ? "投资收益计算器" : "Investment Return Calculator";
   const heroDescriptor = lang === "zh" ? "月度估算 / 交易日精确 / 场景对比" : "Monthly estimates / Trading-day precision / Scenario compare";
   const helperText =
     lang === "zh"
-      ? "输入参数后结果会实时更新。高级功能仍然保留，只是被放到更靠后的分析区。"
-      : "Results update live as you edit. Advanced tools are still available, just moved deeper into the analysis flow.";
+      ? "输入参数后结果会实时更新。高级功能仍然保留，但默认收在后面的分析区。"
+      : "Results update live as you edit. Advanced tools stay available, but remain tucked into the analysis area by default.";
   const shortcuts =
     lang === "zh"
       ? [
@@ -54,7 +54,7 @@ export function AppHeader({
     >
       <div className="finance-hero-top">
         <div className="finance-brand-mark">
-          <div className="section-kicker">{brand}</div>
+          <div className="finance-brand-name">{brand}</div>
           <div className="finance-hero-live">{heroDescriptor}</div>
         </div>
         <div className="hero-control-dock">

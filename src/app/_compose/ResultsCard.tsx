@@ -52,7 +52,6 @@ export function ResultsCard({
   sensitivityRows,
   compareSectionRef,
 }: any) {
-  const resultStudioLabel = lang === "zh" ? "结果画布" : "Results Canvas";
   const resultStudioSub =
     lang === "zh"
       ? "先展示能让客户一眼看懂的结论，再展开图表、时间轴和压力测试。"
@@ -67,8 +66,7 @@ export function ResultsCard({
       <CardHeader className="gap-4 border-b border-border/50 bg-gradient-to-r from-background/20 to-transparent">
         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0">
-            <div className="section-kicker">{resultStudioLabel}</div>
-            <CardTitle className="mt-2 text-[1.45rem]">{t("secResult")}</CardTitle>
+            <CardTitle className="text-[1.45rem]">{t("secResult")}</CardTitle>
             <CardDescription className="mt-2 max-w-3xl leading-relaxed">
               {resultStudioSub}
             </CardDescription>
@@ -88,7 +86,7 @@ export function ResultsCard({
         {baseResult.ok ? (
           <>
             <div className="finance-summary-banner">
-              <div className="section-kicker">{t("summaryTitle")}</div>
+              <div className="text-sm font-semibold text-foreground">{t("summaryTitle")}</div>
               <div className="finance-summary-copy">{summaryText}</div>
               <div className="finance-summary-sub">
                 {state.showAnnualized ? annualizedHint || t("annualHintMonthly") : t("kpiProfitHint")}
@@ -178,7 +176,7 @@ export function ResultsCard({
             <StrategyBrief lang={lang} title={strategyBriefTitle} subtitle={strategyBriefSubtitle} items={strategyBriefItems} />
 
             <div className="dr-panel rounded-[24px] p-4">
-              <div className="section-kicker">{t("insightTitle")}</div>
+              <div className="text-base font-semibold text-foreground">{t("insightTitle")}</div>
               <Tabs defaultValue="calendar" className="mt-3">
                 <TabsList className="flex flex-wrap">
                   <TabsTrigger value="calendar">{t("insightCalendarTab")}</TabsTrigger>
@@ -249,7 +247,7 @@ export function ResultsCard({
                 </div>
                 {blockingActions?.length ? (
                   <div className="mt-3">
-                    <div className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                    <div className="text-xs font-medium text-muted-foreground">
                       {t("invalidStateActionTitle")}
                     </div>
                     <div className="mt-2 grid gap-2">

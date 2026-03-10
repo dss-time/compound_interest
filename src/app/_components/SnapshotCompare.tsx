@@ -57,7 +57,12 @@ export function SnapshotCompare({
   return (
     <div className="action-shell grid gap-3 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="text-sm font-semibold">{title}</div>
+        <div>
+          <div className="text-base font-semibold text-foreground">{title}</div>
+          <div className="mt-1 text-sm text-muted-foreground">
+            {lang === "zh" ? "冻结一个结果节点，后续改参数时可直接看差值。" : "Freeze a result checkpoint so later edits show direct deltas."}
+          </div>
+        </div>
         <div className="flex gap-2">
           <Button size="sm" variant={snapshots.length ? "secondary" : "default"} onClick={onCapture} disabled={!current}>
             {capture}
@@ -98,7 +103,7 @@ export function SnapshotCompare({
           </div>
           {current ? (
             <div className="rounded-[18px] border border-border/60 bg-background/80 p-3">
-              <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{previewTitle}</div>
+              <div className="text-xs text-muted-foreground">{previewTitle}</div>
               <div className="mt-2 grid gap-2 md:grid-cols-3">
                 <MiniMetric label={lang === "zh" ? "收益" : "Profit"} value={fmtMoney(lang, currency, current.profit)} />
                 <MiniMetric label={lang === "zh" ? "总金额" : "Final Balance"} value={fmtMoney(lang, currency, current.balance)} />
@@ -154,7 +159,7 @@ export function SnapshotCompare({
 function MiniMetric({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-[18px] border border-border/60 bg-background/70 px-3 py-2">
-      <div className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">{label}</div>
+      <div className="text-xs text-muted-foreground">{label}</div>
       <div className="mt-1 text-sm font-semibold text-foreground">{value}</div>
     </div>
   );

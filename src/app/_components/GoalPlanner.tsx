@@ -72,9 +72,8 @@ export function GoalPlanner({
     <div className="action-shell grid gap-4 p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <div className="section-kicker">{title}</div>
-          <div className="mt-2 text-base font-semibold text-foreground">{title}</div>
-          <div className="mt-2 text-xs leading-relaxed text-muted-foreground">{hint}</div>
+          <div className="text-base font-semibold text-foreground">{title}</div>
+          <div className="mt-1 text-sm leading-relaxed text-muted-foreground">{hint}</div>
         </div>
         {simMode === "tradingDays" ? (
           <div className="rounded-full border border-amber-500/25 bg-amber-500/10 px-3 py-1 text-[11px] font-medium text-amber-700 dark:text-amber-300">
@@ -97,13 +96,13 @@ export function GoalPlanner({
       </div>
       <div className="grid gap-2 sm:grid-cols-2">
         <div className="rounded-[18px] border border-border/50 bg-background/80 px-3 py-3">
-          <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{rateLabel}</div>
+          <div className="text-xs text-muted-foreground">{rateLabel}</div>
           <div className="mt-2 text-lg font-semibold text-foreground">
             {neededMonthlyRate !== null && isFinite(neededMonthlyRate) ? `${(neededMonthlyRate * 100).toFixed(3)}%` : na}
           </div>
         </div>
         <div className="rounded-[18px] border border-border/50 bg-background/80 px-3 py-3">
-          <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{monthsLabel}</div>
+          <div className="text-xs text-muted-foreground">{monthsLabel}</div>
           <div className="mt-2 text-lg font-semibold text-foreground">
             {neededMonths !== null && isFinite(neededMonths) ? neededMonths.toFixed(1) : na}
           </div>

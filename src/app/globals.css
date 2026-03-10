@@ -78,8 +78,8 @@
   position: fixed;
   inset: 0;
   pointer-events: none;
-  background-image: linear-gradient(to right, rgba(120, 140, 170, 0.09) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(120, 140, 170, 0.08) 1px, transparent 1px);
+  background-image: linear-gradient(to right, rgba(120, 140, 170, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(120, 140, 170, 0.04) 1px, transparent 1px);
   background-size: 40px 40px;
   mask-image: radial-gradient(circle at 50% 20%, black 25%, transparent 90%);
   z-index: 0;
@@ -90,23 +90,21 @@
   position: fixed;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(circle at 16% 12%, rgba(255, 170, 105, 0.14), transparent 32%),
-    radial-gradient(circle at 84% 16%, rgba(86, 177, 255, 0.14), transparent 30%),
-    radial-gradient(circle at 50% 90%, rgba(255, 214, 120, 0.08), transparent 36%);
+  background: radial-gradient(circle at 18% 12%, rgba(255, 196, 120, 0.07), transparent 28%),
+    radial-gradient(circle at 84% 14%, rgba(86, 177, 255, 0.08), transparent 28%);
   z-index: 0;
-  filter: blur(10px);
+  filter: blur(14px);
 }
 
 .dark .ambient-grid::before {
-  background-image: linear-gradient(to right, rgba(86, 104, 132, 0.12) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(86, 104, 132, 0.11) 1px, transparent 1px);
+  background-image: linear-gradient(to right, rgba(86, 104, 132, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(86, 104, 132, 0.07) 1px, transparent 1px);
 }
 
 .dark .ambient-grid::after {
-  background: radial-gradient(circle at 14% 10%, rgba(255, 122, 64, 0.18), transparent 30%),
-    radial-gradient(circle at 84% 14%, rgba(82, 145, 255, 0.18), transparent 30%),
-    radial-gradient(circle at 50% 96%, rgba(72, 214, 255, 0.08), transparent 34%);
-  filter: blur(18px);
+  background: radial-gradient(circle at 18% 10%, rgba(255, 138, 80, 0.08), transparent 26%),
+    radial-gradient(circle at 84% 12%, rgba(82, 145, 255, 0.1), transparent 26%);
+  filter: blur(20px);
 }
 
 .hero-card {
@@ -244,10 +242,10 @@
 
 .finance-hero-simple {
   background:
-    radial-gradient(circle at 50% -12%, rgba(152, 194, 255, 0.26), transparent 32%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 24%),
-    linear-gradient(160deg, rgba(34, 77, 149, 0.94) 0%, rgba(31, 56, 108, 0.92) 48%, rgba(24, 42, 82, 0.96) 100%);
-  border-color: rgba(129, 167, 230, 0.28);
+    radial-gradient(circle at 50% -12%, rgba(152, 194, 255, 0.18), transparent 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 22%),
+    linear-gradient(160deg, rgba(26, 54, 104, 0.94) 0%, rgba(23, 44, 84, 0.94) 52%, rgba(18, 35, 69, 0.96) 100%);
+  border-color: rgba(129, 167, 230, 0.18);
 }
 
 .finance-hero-top {
@@ -260,20 +258,26 @@
 
 .finance-brand-mark {
   display: grid;
-  gap: 6px;
+  gap: 4px;
+}
+
+.finance-brand-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(236, 243, 255, 0.92);
 }
 
 .finance-hero-live {
   font-size: 12px;
   font-weight: 500;
-  color: rgba(232, 242, 255, 0.82);
+  color: rgba(232, 242, 255, 0.7);
 }
 
 .finance-hero-main-simple {
   display: grid;
   justify-items: center;
-  gap: 14px;
-  padding-top: 18px;
+  gap: 12px;
+  padding-top: 14px;
   text-align: center;
 }
 
@@ -281,37 +285,37 @@
   display: inline-flex;
   align-items: center;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.08);
-  padding: 8px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 7px 12px;
   font-size: 12px;
-  font-weight: 600;
-  color: white;
+  font-weight: 500;
+  color: rgba(245, 249, 255, 0.92);
 }
 
 .finance-hero-title-simple {
-  max-width: 14ch;
+  max-width: 12ch;
   font-family: var(--font-display);
-  font-size: clamp(2.2rem, 4vw, 3.9rem);
+  font-size: clamp(2rem, 3.4vw, 3.35rem);
   font-weight: 700;
-  line-height: 1.06;
+  line-height: 1.08;
   letter-spacing: -0.03em;
   color: white;
   text-wrap: balance;
 }
 
 .finance-hero-sub-simple {
-  max-width: 56ch;
+  max-width: 52ch;
   font-size: 14px;
-  line-height: 1.75;
-  color: rgba(232, 242, 255, 0.82);
+  line-height: 1.68;
+  color: rgba(232, 242, 255, 0.74);
 }
 
 .finance-shortcut-row {
   display: grid;
   gap: 12px;
-  width: min(100%, 820px);
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: min(100%, 860px);
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
 
 .finance-shortcut {
@@ -320,8 +324,8 @@
   gap: 12px;
   min-height: 76px;
   border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
   padding: 14px 16px;
   text-align: left;
   color: white;
@@ -330,8 +334,8 @@
 
 .finance-shortcut:hover {
   transform: translateY(-2px);
-  border-color: rgba(255, 255, 255, 0.28);
-  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.09);
 }
 
 .finance-shortcut-icon {
@@ -342,8 +346,8 @@
   height: 42px;
   flex-shrink: 0;
   border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.09);
 }
 
 .finance-shortcut-copy {
@@ -361,11 +365,7 @@
 .finance-shortcut-sub {
   font-size: 11px;
   line-height: 1.5;
-  color: rgba(232, 242, 255, 0.76);
-}
-
-.finance-hero-simple .section-kicker {
-  color: rgba(232, 242, 255, 0.7);
+  color: rgba(232, 242, 255, 0.68);
 }
 
 .finance-section-head {
@@ -376,7 +376,7 @@
 
 .finance-section-title {
   white-space: nowrap;
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: hsl(var(--foreground));
 }
@@ -389,16 +389,16 @@
 
 .finance-calc-strip {
   border-radius: 28px;
-  border: 1px solid rgba(121, 155, 212, 0.18);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(241, 246, 255, 0.88));
+  border: 1px solid rgba(121, 155, 212, 0.14);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(243, 247, 253, 0.9));
   padding: 22px;
-  box-shadow: 0 18px 42px rgba(41, 77, 134, 0.1);
+  box-shadow: 0 14px 30px rgba(41, 77, 134, 0.06);
 }
 
 .dark .finance-calc-strip {
-  border-color: rgba(100, 138, 214, 0.24);
-  background: linear-gradient(180deg, rgba(13, 23, 39, 0.92), rgba(15, 30, 52, 0.82));
-  box-shadow: 0 22px 48px rgba(0, 0, 0, 0.28);
+  border-color: rgba(100, 138, 214, 0.18);
+  background: linear-gradient(180deg, rgba(12, 22, 37, 0.92), rgba(13, 26, 44, 0.84));
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.22);
 }
 
 .finance-strip-head {
@@ -411,7 +411,7 @@
 .finance-strip-grid {
   display: grid;
   gap: 14px;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
 
 .finance-strip-field {
@@ -419,20 +419,18 @@
   border: 1px solid hsl(var(--border) / 0.65);
   background: linear-gradient(180deg, hsl(var(--background) / 0.94), hsl(var(--background) / 0.8));
   padding: 14px 16px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .finance-strip-label {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 500;
   color: hsl(var(--muted-foreground));
 }
 
 .finance-strip-value {
   margin-top: 10px;
-  font-size: 1.35rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: hsl(var(--foreground));
 }
@@ -487,7 +485,7 @@
 .finance-result-grid {
   display: grid;
   gap: 16px;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
 .finance-result-card {
@@ -597,7 +595,7 @@
 .compare-grid {
   display: grid;
   gap: 16px;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
 }
 
 .compare-card {
@@ -639,20 +637,18 @@
 }
 
 .compare-card-title {
-  font-size: 1.35rem;
+  font-size: 1.15rem;
   font-weight: 700;
   color: hsl(var(--foreground));
 }
 
 .compare-card-rate-label {
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-size: 12px;
   color: hsl(var(--muted-foreground));
 }
 
 .compare-card-rate {
-  font-size: 1.9rem;
+  font-size: 1.6rem;
   font-weight: 800;
   line-height: 1;
   color: hsl(var(--primary));
@@ -712,8 +708,8 @@
 
 .surface-sub {
   margin-top: 4px;
-  font-size: 12px;
-  line-height: 1.5;
+  font-size: 13px;
+  line-height: 1.65;
   color: hsl(var(--muted-foreground));
 }
 
@@ -750,9 +746,8 @@
 
 .step-eyebrow {
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.1em;
   color: hsl(var(--muted-foreground));
 }
 
@@ -943,9 +938,8 @@
 
 .quickstart-tag {
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   color: hsl(var(--muted-foreground));
 }
 
@@ -1102,7 +1096,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
+  font-size: 12px;
   color: hsl(var(--muted-foreground));
 }
 

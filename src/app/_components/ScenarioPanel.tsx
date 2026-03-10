@@ -6,9 +6,8 @@ export function ScenarioPanel({ scenarios, baseResult, lang, currency, t, onSave
     <div className="action-shell grid gap-3 p-4">
       <div className="flex items-center justify-between">
         <div>
-          <div className="section-kicker">{t("scenarioTitle")}</div>
-          <div className="mt-2 text-sm font-semibold">{t("scenarioTitle")}</div>
-          <div className="text-xs text-muted-foreground">{t("scenarioSub")}</div>
+          <div className="text-base font-semibold text-foreground">{t("scenarioTitle")}</div>
+          <div className="mt-1 text-sm text-muted-foreground">{t("scenarioSub")}</div>
         </div>
         <Button size="sm" variant="secondary" onClick={onSave} disabled={!baseResult.ok}>
           {t("scenarioSave")}

@@ -92,7 +92,6 @@ export function ParamsCard({
   const modeBasic = state.lang === "zh" ? "基础版" : "Basic";
   const modePro = state.lang === "zh" ? "高级版" : "Advanced";
   const devLabel = state.lang === "zh" ? "高级数据视图" : "Advanced Data View";
-  const studioLabel = state.lang === "zh" ? "规划工作台" : "Planning Studio";
   const studioSub =
     state.lang === "zh"
       ? "把输入、校验与分享动作整理成同一套客户可读的操作面板。"
@@ -202,8 +201,7 @@ export function ParamsCard({
       <CardHeader className="gap-4 border-b border-border/50 bg-gradient-to-r from-background/20 to-transparent">
         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0">
-            <div className="section-kicker">{studioLabel}</div>
-            <CardTitle className="mt-2 text-[1.45rem]">{t("secParams")}</CardTitle>
+            <CardTitle className="text-[1.45rem]">{t("secParams")}</CardTitle>
             <CardDescription className="mt-2 max-w-2xl leading-relaxed">{studioSub}</CardDescription>
           </div>
           <Badge variant="secondary" className="rounded-full border border-border/50 bg-background/70 px-3 py-1.5">
@@ -280,9 +278,8 @@ export function ParamsCard({
         <div className="surface-shell">
           <div className="surface-head">
             <div>
-              <div className="section-kicker">{flowLabel}</div>
-              <div className="mt-2 text-base font-semibold text-foreground">{flowLabel}</div>
-              <div className="surface-sub">{flowSub}</div>
+              <div className="text-base font-semibold text-foreground">{flowLabel}</div>
+              <div className="mt-1 surface-sub">{flowSub}</div>
             </div>
             <Badge variant="secondary" className="rounded-full border border-border/60 bg-background/70 px-3 py-1.5">
               {state.lang === "zh" ? "渐进披露" : "Progressive Disclosure"}
