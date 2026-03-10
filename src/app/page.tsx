@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useCallback } from "react";
+import { useMemo, useRef, useCallback } from "react";
 
 import { AppHeader } from "@/app/_components/AppHeader";
 import { appToast } from "@/app/_components/AppToaster";
@@ -13,7 +13,7 @@ import { useAppPersistence } from "@/app/_effects/useAppPersistence";
 import { useAutoStartDate } from "@/app/_effects/useAutoStartDate";
 import { useClock } from "@/app/_hooks/useClock";
 import { useHotkeys } from "@/app/_hooks/useHotkeys";
-import { initI18n, t as translate } from "@/app/_domain/i18n";
+import { createTranslator } from "@/app/_domain/i18n";
 import { type ReadinessItem } from "@/app/_components/ReadinessPanel";
 import { type StrategyBriefItem } from "@/app/_components/StrategyBrief";
 
@@ -76,11 +76,7 @@ export default function Page() {
   const lastSaveRef = useRef(0);
   const lang = state.lang;
 
-  useEffect(() => {
-    initI18n(state.lang);
-  }, [state.lang]);
-
-  const t = useCallback((key: string, vars?: Record<string, string | number>) => translate(key, vars), [lang]);
+  const t = useMemo(() => createTranslator(lang), [lang]);
 
   const pushNotice = useCallback(
     (

@@ -1,37 +1,37 @@
-import i18next from "i18next";
-
 import { I18N } from "@/lib/i18n";
 
-const resources = {
-  zh: { translation: I18N.zh },
-  en: { translation: I18N.en },
-};
+type Lang = "zh" | "en";
+type TranslationVars = Record<string, string | number>;
 
-let initialized = false;
+let currentLang: Lang = "zh";
 
-export function initI18n(lang: "zh" | "en") {
-  if (initialized) {
-    i18next.changeLanguage(lang);
-    return;
-  }
-  i18next.init({
-    resources,
-    lng: lang,
-    fallbackLng: "zh",
-    interpolation: {
-      escapeValue: false,
-      prefix: "{",
-      suffix: "}",
-    },
+function interpolate(template: string, vars?: TranslationVars) {
+  if (!vars) return template;
+  return template.replace(/\{(\w+)\}/g, (_, key: string) => {
+    const value = vars[key];
+    return value === undefined || value === null ? `{${key}}` : String(value);
   });
-  initialized = true;
 }
 
-export function t(key: string, vars?: Record<string, string | number>) {
-  return i18next.t(key, vars as any) as string;
+export function translateFor(lang: Lang, key: string, vars?: TranslationVars) {
+  const primary = I18N[lang] as Record<string, string>;
+  const fallback = I18N.zh as Record<string, string>;
+  const template = primary[key] ?? fallback[key] ?? key;
+  return interpolate(String(template), vars);
+}
+
+export function createTranslator(lang: Lang) {
+  return (key: string, vars?: TranslationVars) => translateFor(lang, key, vars);
+}
+
+export function initI18n(lang: Lang) {
+  currentLang = lang;
+}
+
+export function t(key: string, vars?: TranslationVars) {
+  return translateFor(currentLang, key, vars);
 }
 
 export function getLang() {
-  const lng = i18next.language;
-  return (lng === "en" ? "en" : "zh") as "zh" | "en";
+  return currentLang;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,7 +19,7 @@ import { StrategyCard } from "@/app/options/_components/StrategyCard";
 import { buildWorkbookBlob, downloadBlob } from "@/app/_domain/export";
 import { useExportActions } from "@/app/_hooks/useExportActions";
 import { toPng } from "html-to-image";
-import { initI18n, t as tr } from "@/app/_domain/i18n";
+import { createTranslator } from "@/app/_domain/i18n";
 import { useAppStore } from "@/app/_store/useAppStore";
 
 function fmtUSD(v: number) {
@@ -62,11 +62,7 @@ export function OptionWorkbench() {
   const chartRef = useRef<HTMLDivElement | null>(null);
   const detailRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    initI18n(lang);
-  }, [lang]);
-
-  const t = (key: string) => tr(key);
+  const t = useMemo(() => createTranslator(lang), [lang]);
 
   const analyses = useMemo(() => {
     return strategies.map((strategy) => {

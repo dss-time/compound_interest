@@ -151,35 +151,31 @@ export function ResultsCard({
             </div>
 
             <SectionHeading title={detailSectionTitle} />
-            <div className="results-hero-grid">
-              <div className="results-side-stack">
-                <ExportActions lang={lang} onCsv={onExportCsv} onPng={onExportPng} onPdf={onExportPdf} />
-                <SnapshotCompare
-                  lang={lang}
-                  currency={state.currency}
-                  current={currentMetrics}
-                  snapshot={snapshotMetrics}
-                  snapshots={snapshots}
-                  selectedId={selectedSnapshotId}
-                  onSelect={onSelectSnapshot}
-                  onCapture={onCaptureSnapshot}
-                  onClear={onClearSnapshot}
-                />
-              </div>
-
-              <div className="results-side-stack">
-                <GoalPlanner
-                  lang={lang}
-                  currency={state.currency}
-                  simMode={state.simMode}
-                  mode={state.mode}
-                  principal={state.principal}
-                  months={months}
-                  monthlyRatePct={state.monthlyRate}
-                />
-                <StrategyBrief title={strategyBriefTitle} subtitle={strategyBriefSubtitle} items={strategyBriefItems} />
-              </div>
+            <div className="results-support-grid">
+              <ExportActions lang={lang} onCsv={onExportCsv} onPng={onExportPng} onPdf={onExportPdf} />
+              <GoalPlanner
+                lang={lang}
+                currency={state.currency}
+                simMode={state.simMode}
+                mode={state.mode}
+                principal={state.principal}
+                months={months}
+                monthlyRatePct={state.monthlyRate}
+              />
+              <SnapshotCompare
+                lang={lang}
+                currency={state.currency}
+                current={currentMetrics}
+                snapshot={snapshotMetrics}
+                snapshots={snapshots}
+                selectedId={selectedSnapshotId}
+                onSelect={onSelectSnapshot}
+                onCapture={onCaptureSnapshot}
+                onClear={onClearSnapshot}
+              />
             </div>
+
+            <StrategyBrief lang={lang} title={strategyBriefTitle} subtitle={strategyBriefSubtitle} items={strategyBriefItems} />
 
             <div className="dr-panel rounded-[24px] p-4">
               <div className="section-kicker">{t("insightTitle")}</div>

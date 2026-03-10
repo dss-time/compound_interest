@@ -13,9 +13,8 @@ export function QuickStart({ presets, onApply, t, lang }: any) {
     <div className="dr-panel grid gap-4 rounded-[24px] p-4">
       <div className="surface-head">
         <div>
-          <div className="section-kicker">{t("quickStartTitle")}</div>
-          <div className="mt-2 text-base font-semibold text-foreground">{t("quickStartTitle")}</div>
-          <div className="surface-sub">{t("quickStartSub")}</div>
+          <div className="text-base font-semibold text-foreground">{t("quickStartTitle")}</div>
+          <div className="mt-1 surface-sub">{t("quickStartSub")}</div>
         </div>
         <Badge variant="outline" className="rounded-full border-border/60 bg-background/70">
           {t("quickStartBadge")}

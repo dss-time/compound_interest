@@ -217,9 +217,8 @@ export function ParamsCard({
           <div className="surface-shell">
             <div className="surface-head">
               <div>
-                <div className="section-kicker">{modeLabel}</div>
-                <div className="mt-2 text-base font-semibold text-foreground">{modeLabel}</div>
-                <div className="surface-sub">{proSectionSub}</div>
+                <div className="text-base font-semibold text-foreground">{modeLabel}</div>
+                <div className="mt-1 surface-sub">{proSectionSub}</div>
               </div>
             </div>
             <Tabs value={state.uiMode} onValueChange={(value) => setState((s) => ({ ...s, uiMode: value as "basic" | "pro" }))}>
@@ -240,17 +239,16 @@ export function ParamsCard({
             ) : null}
           </div>
 
-          <div className="grid gap-4">
-            <QuickStart presets={PRESETS} onApply={applyQuickPreset} t={t} lang={state.lang} />
-            <ReadinessPanel
-              title={readinessTitle}
-              subtitle={readinessSubtitle}
-              summary={readinessSummary}
-              primaryAction={readinessPrimaryAction}
-              items={readinessItems}
-            />
-          </div>
+          <QuickStart presets={PRESETS} onApply={applyQuickPreset} t={t} lang={state.lang} />
         </div>
+
+        <ReadinessPanel
+          title={readinessTitle}
+          subtitle={readinessSubtitle}
+          summary={readinessSummary}
+          primaryAction={readinessPrimaryAction}
+          items={readinessItems}
+        />
 
         <div className="finance-calc-strip">
           <div className="finance-strip-head">

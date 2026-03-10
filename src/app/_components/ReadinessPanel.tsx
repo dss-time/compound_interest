@@ -37,9 +37,8 @@ export function ReadinessPanel({
     <div className="dr-panel grid gap-4 rounded-[24px] p-4">
       <div className="surface-head">
         <div className="min-w-0">
-          <div className="section-kicker">{title}</div>
-          <div className="mt-2 text-base font-semibold text-foreground">{title}</div>
-          <div className="surface-sub">{subtitle}</div>
+          <div className="text-base font-semibold text-foreground">{title}</div>
+          <div className="mt-1 surface-sub">{subtitle}</div>
         </div>
         <div className="rounded-full border border-border/60 bg-background/70 px-3 py-1 text-xs font-medium text-foreground shadow-sm">
           {summary}
