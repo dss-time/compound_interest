@@ -1,3 +1,5 @@
+import { Camera, Clock3, GitCompareArrows, Trash2 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { fmtMoney, fmtPct } from "@/lib/utils";
 
@@ -58,16 +60,35 @@ export function SnapshotCompare({
     <div className="action-shell grid gap-3 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <div className="text-base font-semibold text-foreground">{title}</div>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-border/60 bg-background/70 text-primary">
+              <GitCompareArrows className="h-4 w-4" />
+            </span>
+            <div className="text-base font-semibold text-foreground">{title}</div>
+          </div>
           <div className="mt-1 text-sm text-muted-foreground">
             {lang === "zh" ? "冻结一个结果节点，后续改参数时可直接看差值。" : "Freeze a result checkpoint so later edits show direct deltas."}
           </div>
         </div>
-        <div className="flex gap-2">
-          <Button size="sm" variant={snapshots.length ? "secondary" : "default"} onClick={onCapture} disabled={!current}>
+        <div className="flex w-full flex-wrap gap-2 md:w-auto">
+          <Button
+            size="sm"
+            variant={snapshots.length ? "secondary" : "default"}
+            onClick={onCapture}
+            disabled={!current}
+            className="min-w-0 flex-1 md:flex-none"
+          >
+            <Camera className="h-4 w-4" />
             {capture}
           </Button>
-          <Button size="sm" variant="ghost" onClick={onClear} disabled={!snapshot}>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={onClear}
+            disabled={!snapshot}
+            className="min-w-0 flex-1 md:flex-none"
+          >
+            <Trash2 className="h-4 w-4" />
             {clear}
           </Button>
         </div>
@@ -80,10 +101,10 @@ export function SnapshotCompare({
             return (
               <button
                 key={item.id}
-                className={`rounded-full border px-3 py-1 transition ${
+                className={`inline-flex items-center justify-center rounded-full border px-3 py-1.5 transition-[transform,background-color,border-color,color,box-shadow] duration-150 ease-out ${
                   active
-                    ? "border-primary bg-primary text-primary-foreground shadow-[0_10px_24px_hsl(var(--primary)/0.24)]"
-                    : "border-border/60 bg-background/80 text-muted-foreground hover:-translate-y-0.5 hover:text-foreground"
+                    ? "border-primary/30 bg-primary/12 text-foreground shadow-[0_8px_18px_hsl(var(--primary)/0.12)]"
+                    : "border-border/60 bg-background/80 text-muted-foreground hover:-translate-y-px hover:text-foreground hover:shadow-[0_8px_18px_rgba(15,23,42,0.06)]"
                 }`}
                 onClick={() => onSelect(item.id)}
               >
@@ -123,7 +144,8 @@ export function SnapshotCompare({
         <div className="rounded-[18px] border border-border/60 bg-background/70 px-3 py-2 text-xs text-muted-foreground">{selectPrompt}</div>
       ) : (
         <div className="grid gap-2 text-xs">
-          <div className="text-muted-foreground">
+          <div className="inline-flex items-center gap-1.5 text-muted-foreground">
+            <Clock3 className="h-3.5 w-3.5 text-primary" />
             {lang === "zh" ? "快照时间" : "Snapshot Time"}: {new Date(snapshot.createdAt).toLocaleString(lang === "zh" ? "zh-CN" : "en-US")}
           </div>
           <MetricRow

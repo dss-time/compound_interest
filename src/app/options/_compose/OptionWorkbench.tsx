@@ -1,16 +1,21 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import { RefreshCw, SlidersHorizontal } from "lucide-react";
+import { toPng } from "html-to-image";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-
+import { appToast } from "@/app/_components/AppToaster";
+import SpotlightCard from "@/app/_components/reactbits/SpotlightCard";
+import { PAGE_BG, PAGE_WRAP } from "@/app/_styles/layout";
 import {
   buildPayoffSeries,
   calcStrategyPayoffAtExpiry,
   estimateRangeRisk,
   findBreakevens,
+  getStrategyDescription,
+  getStrategyRiskHints,
   STRATEGIES,
   type StrategyTemplate,
 } from "@/app/options/_domain/payoff";
@@ -18,7 +23,6 @@ import { OptionPayoffChart } from "@/app/options/_components/OptionPayoffChart";
 import { StrategyCard } from "@/app/options/_components/StrategyCard";
 import { buildWorkbookBlob, downloadBlob } from "@/app/_domain/export";
 import { useExportActions } from "@/app/_hooks/useExportActions";
-import { toPng } from "html-to-image";
 import { createTranslator } from "@/app/_domain/i18n";
 import { useAppStore } from "@/app/_store/useAppStore";
 
@@ -55,6 +59,7 @@ function cloneStrategies(): StrategyTemplate[] {
 
 export function OptionWorkbench() {
   const lang = useAppStore((s) => s.state.lang);
+  const theme = useAppStore((s) => s.state.theme);
   const [expiryPrice, setExpiryPrice] = useState(100);
   const [centerPrice, setCenterPrice] = useState(100);
   const [strategies, setStrategies] = useState<StrategyTemplate[]>(() => cloneStrategies());
@@ -63,6 +68,27 @@ export function OptionWorkbench() {
   const detailRef = useRef<HTMLDivElement | null>(null);
 
   const t = useMemo(() => createTranslator(lang), [lang]);
+
+  const heroTitle = lang === "zh" ? "期权策略工作台" : "Options Strategy Workbench";
+  const heroSub =
+    lang === "zh"
+      ? "用更直观的盈亏曲线和腿结构编辑，快速比较主流期权策略在到期时的风险收益。"
+      : "Compare mainstream options structures with a cleaner payoff curve and editable leg setup.";
+  const heroBadge = lang === "zh" ? "到期收益视角" : "Expiry payoff lens";
+  const libraryTitle = lang === "zh" ? "策略库" : "Strategy Library";
+  const librarySub =
+    lang === "zh"
+      ? "先选一个策略，再在下方细调执行价、权利金和数量。"
+      : "Pick a structure first, then refine strikes, premiums, and size below.";
+  const detailTitle = lang === "zh" ? "策略详情" : "Strategy Detail";
+  const detailSub =
+    lang === "zh"
+      ? "这里展示当前策略在不同到期价格下的盈亏曲线，以及可编辑的腿结构。"
+      : "This section shows the expiry payoff curve and editable legs for the selected structure.";
+  const legStrikeLabel = lang === "zh" ? "执行价" : "Strike";
+  const legPremiumLabel = lang === "zh" ? "权利金" : "Premium";
+  const legQtyLabel = lang === "zh" ? "数量" : "Qty";
+  const noBreakevenLabel = lang === "zh" ? "无" : "None";
 
   const analyses = useMemo(() => {
     return strategies.map((strategy) => {
@@ -75,6 +101,7 @@ export function OptionWorkbench() {
   }, [centerPrice, expiryPrice, strategies]);
 
   const active = analyses.find((item) => item.strategy.id === activeId) || analyses[0];
+  const activeRiskHints = active ? getStrategyRiskHints(active.strategy, lang) : null;
 
   const exportCsv = () => {
     const rows = analyses.map((item) => ({
@@ -95,33 +122,63 @@ export function OptionWorkbench() {
   };
 
   const summaryLines = () => {
-    if (!active) return ["No active strategy"];
+    if (!active) return [lang === "zh" ? "当前没有选中策略" : "No active strategy"];
     return [
-      `Strategy: ${active.strategy.name}`,
-      `Expiry Price: ${expiryPrice}`,
-      `P/L at expiry: ${fmtUSD(active.pnl)}`,
-      `Breakeven(s): ${active.breakevens.length ? active.breakevens.join(" / ") : "N/A"}`,
-      `Max Profit (range): ${fmtUSD(active.risk.maxProfit)}`,
-      `Max Loss (range): ${fmtUSD(active.risk.maxLoss)}`,
-      `Legs: ${active.strategy.legs
-        .map((leg) => `${leg.label} ${leg.optionType.toUpperCase()} ${leg.side.toUpperCase()} K=${leg.strike} P=${leg.premium} Q=${leg.qty}`)
-        .join(" | ")}`,
+      `${lang === "zh" ? "策略" : "Strategy"}: ${active.strategy.name}`,
+      `${lang === "zh" ? "到期价格" : "Expiry Price"}: ${expiryPrice}`,
+      `${lang === "zh" ? "到期盈亏" : "P/L at expiry"}: ${fmtUSD(active.pnl)}`,
+      `${lang === "zh" ? "盈亏平衡点" : "Breakeven(s)"}: ${active.breakevens.length ? active.breakevens.join(" / ") : noBreakevenLabel}`,
+      `${lang === "zh" ? "区间最大收益" : "Max Profit (range)"}: ${fmtUSD(active.risk.maxProfit)}`,
+      `${lang === "zh" ? "区间最大亏损" : "Max Loss (range)"}: ${fmtUSD(active.risk.maxLoss)}`,
     ];
   };
 
-  const { exportCsv: handleExportCsv, exportPdf: handleExportPdf } = useExportActions({
+  const { exportCsv: runExportCsv, exportPdf: runExportPdf } = useExportActions({
     chartRef,
     onExportCsv: exportCsv,
     title: `options-${active?.strategy.id || "strategy"}`,
     getSummaryLines: summaryLines,
   });
 
+  const handleExportCsv = () => {
+    try {
+      runExportCsv();
+      appToast("success", lang === "zh" ? "已导出 CSV" : "CSV exported", lang === "zh" ? "策略表格已导出到本地。" : "The strategy table was exported locally.");
+    } catch {
+      appToast("error", lang === "zh" ? "CSV 导出失败" : "CSV export failed", lang === "zh" ? "请稍后重试。" : "Please try again.");
+    }
+  };
+
   const handleExportPng = async () => {
-    const node = detailRef.current;
-    if (!node) return;
-    const dataUrl = await toPng(node, { cacheBust: true, pixelRatio: 2 });
-    const blob = await (await fetch(dataUrl)).blob();
-    downloadBlob(`options-${active?.strategy.id || "strategy"}.png`, blob);
+    try {
+      const node = detailRef.current;
+      if (!node) {
+        appToast("error", lang === "zh" ? "PNG 导出失败" : "PNG export failed", lang === "zh" ? "当前详情视图尚未准备好。" : "The detail view is not ready yet.");
+        return;
+      }
+      const dataUrl = await toPng(node, { cacheBust: true, pixelRatio: 2 });
+      const blob = await (await fetch(dataUrl)).blob();
+      downloadBlob(`options-${active?.strategy.id || "strategy"}.png`, blob);
+      appToast("success", lang === "zh" ? "已导出 PNG" : "PNG exported", lang === "zh" ? "当前策略详情已导出为图片。" : "The current strategy detail was exported as an image.");
+    } catch {
+      appToast("error", lang === "zh" ? "PNG 导出失败" : "PNG export failed", lang === "zh" ? "请稍后重试。" : "Please try again.");
+    }
+  };
+
+  const handleExportPdf = async () => {
+    try {
+      await runExportPdf();
+      appToast("success", lang === "zh" ? "已导出 PDF" : "PDF exported", lang === "zh" ? "当前策略摘要已导出为 PDF。" : "The strategy summary was exported as PDF.");
+    } catch {
+      appToast("error", lang === "zh" ? "PDF 导出失败" : "PDF export failed", lang === "zh" ? "请稍后重试。" : "Please try again.");
+    }
+  };
+
+  const resetStrategies = () => {
+    const next = cloneStrategies();
+    setStrategies(next);
+    setActiveId(next[0]?.id || "");
+    appToast("info", lang === "zh" ? "已恢复默认参数" : "Defaults restored", lang === "zh" ? "所有策略腿结构已恢复到默认值。" : "All strategy legs were restored to defaults.");
   };
 
   const updateLeg = (strategyId: string, legIndex: number, key: "strike" | "premium" | "qty", value: number) => {
@@ -151,123 +208,169 @@ export function OptionWorkbench() {
   };
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-10">
-      <Card className="overflow-hidden">
-        <CardHeader>
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <CardTitle className="text-2xl">{t("optPageTitle")}</CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                const next = cloneStrategies();
-                setStrategies(next);
-                setActiveId(next[0]?.id || "");
-              }}
-            >
+    <main className={PAGE_BG}>
+      <div className={`${PAGE_WRAP} gap-6`}>
+        <SpotlightCard
+          className="hero-card option-hero float-in rounded-[30px] p-5 backdrop-blur-xl md:p-7"
+          spotlightColor={theme === "dark" ? "rgba(88,164,255,0.16)" : "rgba(76,132,255,0.16)"}
+        >
+          <div className="finance-hero-top">
+            <div className="finance-brand-mark">
+              <div className="finance-brand-name">{lang === "zh" ? "期权策略实验台" : "Options Strategy Studio"}</div>
+              <div className="finance-hero-live">{heroBadge}</div>
+            </div>
+            <Button variant="outline" size="sm" className="bg-background/78" onClick={resetStrategies}>
+              <RefreshCw className="h-4 w-4" />
               {t("optReset")}
             </Button>
           </div>
-          <p className="text-sm text-muted-foreground">{t("optPageSub")}</p>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2">
-          <Field label={t("optExpiryPrice")}>
-            <Input
-              type="number"
-              step="0.01"
-              value={expiryPrice}
-              onChange={(e) => setExpiryPrice(Number(e.target.value) || 0)}
-            />
-          </Field>
-          <Field label={t("optCenterPrice")}>
-            <Input
-              type="number"
-              step="0.01"
-              value={centerPrice}
-              onChange={(e) => setCenterPrice(Number(e.target.value) || 100)}
-            />
-          </Field>
-        </CardContent>
-      </Card>
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {analyses.map((item) => (
-          <StrategyCard
-            key={item.strategy.id}
-            strategy={item.strategy}
-            pnl={item.pnl}
-            breakevens={item.breakevens}
-            maxProfit={item.risk.maxProfit}
-            maxLoss={item.risk.maxLoss}
-            active={item.strategy.id === active?.strategy.id}
-            onSelect={() => setActiveId(item.strategy.id)}
-            outlookLabel={lang === "zh" ? outlookMapZh[item.strategy.outlook] : outlookMapEn[item.strategy.outlook]}
-          />
-        ))}
-      </section>
-
-      {active ? (
-        <div ref={detailRef}>
-          <Card className="overflow-hidden">
-            <CardHeader>
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <CardTitle className="text-xl">
-                  {active.strategy.name} {t("optDetails")}
-                </CardTitle>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={handleExportCsv}>
-                    {t("optExportCsv")}
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={handleExportPng}>
-                    {t("optExportPng")}
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={handleExportPdf}>
-                    {t("optExportPdf")}
-                  </Button>
+          <div className="option-hero-grid">
+            <div className="option-hero-copy">
+              <h1 className="option-hero-title">{heroTitle}</h1>
+              <p className="option-hero-sub">{heroSub}</p>
+              <div className="option-hero-stat-grid">
+                <div className="hero-stat">
+                  <div className="hero-stat-label">{lang === "zh" ? "当前策略" : "Active Strategy"}</div>
+                  <div className="hero-stat-value">{active?.strategy.name || "-"}</div>
+                </div>
+                <div className="hero-stat">
+                  <div className="hero-stat-label">{t("optExpiryPrice")}</div>
+                  <div className="hero-stat-value">{fmtUSD(expiryPrice)}</div>
+                </div>
+                <div className="hero-stat">
+                  <div className="hero-stat-label">{t("optCenterPrice")}</div>
+                  <div className="hero-stat-value">{fmtUSD(centerPrice)}</div>
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground">{active.strategy.description}</p>
-            </CardHeader>
-            <CardContent className="grid gap-4">
-              <div className="grid gap-3 md:grid-cols-3">
-                <Kpi title={t("optPnlNow")} value={fmtUSD(active.pnl)} tone={active.pnl >= 0 ? "good" : "bad"} />
-                <Kpi title={t("optBreakeven")} value={active.breakevens.length ? active.breakevens.join(" / ") : "无"} />
-                <Kpi title={t("optRiskHint")} value={`${active.strategy.maxProfitHint} / ${active.strategy.maxLossHint}`} />
+            </div>
+
+            <div className="option-control-card">
+              <div className="option-control-head">
+                <SlidersHorizontal className="h-4 w-4" />
+                <span>{lang === "zh" ? "核心假设" : "Core Assumptions"}</span>
+              </div>
+              <div className="grid gap-4">
+                <Field label={t("optExpiryPrice")}>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={expiryPrice}
+                    onChange={(e) => setExpiryPrice(Number(e.target.value) || 0)}
+                  />
+                </Field>
+                <Field label={t("optCenterPrice")}>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={centerPrice}
+                    onChange={(e) => setCenterPrice(Number(e.target.value) || 100)}
+                  />
+                </Field>
+              </div>
+            </div>
+          </div>
+        </SpotlightCard>
+
+        <section className="option-section-shell">
+          <div className="option-section-head">
+            <div>
+              <div className="text-lg font-semibold text-foreground">{libraryTitle}</div>
+              <div className="mt-1 text-sm text-muted-foreground">{librarySub}</div>
+            </div>
+            <div className="option-meta-pill">
+              {analyses.length} {lang === "zh" ? "个策略" : "strategies"}
+            </div>
+          </div>
+
+          <section className="option-strategy-grid">
+            {analyses.map((item) => (
+              <StrategyCard
+                key={item.strategy.id}
+                strategy={item.strategy}
+                pnl={item.pnl}
+                breakevens={item.breakevens}
+                maxProfit={item.risk.maxProfit}
+                maxLoss={item.risk.maxLoss}
+                active={item.strategy.id === active?.strategy.id}
+                onSelect={() => setActiveId(item.strategy.id)}
+                outlookLabel={lang === "zh" ? outlookMapZh[item.strategy.outlook] : outlookMapEn[item.strategy.outlook]}
+                lang={lang}
+              />
+            ))}
+          </section>
+        </section>
+
+        {active ? (
+          <div ref={detailRef} className="dr-card option-detail-shell rounded-[28px]">
+            <div className="option-detail-head">
+              <div className="min-w-0">
+                <div className="text-lg font-semibold text-foreground">
+                  {active.strategy.name} · {detailTitle}
+                </div>
+                <div className="mt-1 text-sm text-muted-foreground">{detailSub}</div>
+                <div className="mt-3 option-pill w-fit">{getStrategyDescription(active.strategy, lang)}</div>
+              </div>
+              <div className="option-export-row">
+                <Button variant="outline" size="sm" onClick={handleExportCsv}>
+                  {t("optExportCsv")}
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleExportPng}>
+                  {t("optExportPng")}
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleExportPdf}>
+                  {t("optExportPdf")}
+                </Button>
+              </div>
+            </div>
+
+            <div className="option-kpi-grid">
+              <Kpi title={t("optPnlNow")} value={fmtUSD(active.pnl)} tone={active.pnl >= 0 ? "good" : "bad"} />
+              <Kpi title={t("optBreakeven")} value={active.breakevens.length ? active.breakevens.join(" / ") : noBreakevenLabel} />
+              <Kpi title={lang === "zh" ? "区间最大收益" : "Max Profit"} value={fmtUSD(active.risk.maxProfit)} sub={activeRiskHints?.maxProfit} />
+              <Kpi title={lang === "zh" ? "区间最大亏损" : "Max Loss"} value={fmtUSD(active.risk.maxLoss)} sub={activeRiskHints?.maxLoss} />
+            </div>
+
+            <OptionPayoffChart data={active.series} breakevens={active.breakevens} lang={lang} chartRef={chartRef} />
+
+            <div className="option-legs-shell">
+              <div className="text-base font-semibold text-foreground">{t("optLegsTitle")}</div>
+              <div className="mt-1 text-sm text-muted-foreground">
+                {lang === "zh" ? "调整执行价、权利金和数量，图表会实时更新。" : "Adjust strikes, premiums, and quantity to update the chart live."}
               </div>
 
-              <OptionPayoffChart data={active.series} breakevens={active.breakevens} chartRef={chartRef} />
-
-              <div className="rounded-xl border border-border/60 bg-background/70 p-4 text-sm">
-                <div className="mb-2 font-medium">{t("optLegsTitle")}</div>
-                <div className="grid gap-3 text-xs">
-                  {active.strategy.stock ? (
-                    <div className="grid gap-2 rounded-md bg-muted/60 p-3 md:grid-cols-2">
-                      <Field label={t("optStockShares")}>
-                        <Input
-                          type="number"
-                          min="1"
-                          step="1"
-                          value={active.strategy.stock.shares}
-                          onChange={(e) => updateStock(active.strategy.id, "shares", Number(e.target.value))}
-                        />
-                      </Field>
-                      <Field label={t("optStockEntry")}>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          value={active.strategy.stock.entry}
-                          onChange={(e) => updateStock(active.strategy.id, "entry", Number(e.target.value))}
-                        />
-                      </Field>
-                    </div>
-                  ) : null}
+              <div className="mt-4 grid gap-3 text-xs">
+                {active.strategy.stock ? (
+                  <div className="option-leg-row option-leg-row-stock">
+                    <Field label={t("optStockShares")}>
+                      <Input
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={active.strategy.stock.shares}
+                        onChange={(e) => updateStock(active.strategy.id, "shares", Number(e.target.value))}
+                      />
+                    </Field>
+                    <Field label={t("optStockEntry")}>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={active.strategy.stock.entry}
+                        onChange={(e) => updateStock(active.strategy.id, "entry", Number(e.target.value))}
+                      />
+                    </Field>
+                  </div>
+                ) : null}
 
                 {active.strategy.legs.map((leg, idx) => (
-                  <div key={`${active.strategy.id}-${idx}`} className="grid gap-2 rounded-md bg-muted/60 p-3 md:grid-cols-6">
-                    <div className="md:col-span-2">
-                      {leg.label} | {leg.optionType.toUpperCase()} | {leg.side.toUpperCase()}
+                  <div key={`${active.strategy.id}-${idx}`} className="option-leg-row">
+                    <div className="option-leg-meta">
+                      <div className="option-leg-name">{leg.label}</div>
+                      <div className="option-leg-type">
+                        {leg.optionType.toUpperCase()} · {leg.side.toUpperCase()}
+                      </div>
                     </div>
-                    <Field label="Strike">
+                    <Field label={legStrikeLabel}>
                       <Input
                         type="number"
                         step="0.01"
@@ -275,7 +378,7 @@ export function OptionWorkbench() {
                         onChange={(e) => updateLeg(active.strategy.id, idx, "strike", Number(e.target.value))}
                       />
                     </Field>
-                    <Field label="Premium">
+                    <Field label={legPremiumLabel}>
                       <Input
                         type="number"
                         step="0.01"
@@ -283,7 +386,7 @@ export function OptionWorkbench() {
                         onChange={(e) => updateLeg(active.strategy.id, idx, "premium", Number(e.target.value))}
                       />
                     </Field>
-                    <Field label="Qty">
+                    <Field label={legQtyLabel}>
                       <Input
                         type="number"
                         min="1"
@@ -296,10 +399,9 @@ export function OptionWorkbench() {
                 ))}
               </div>
             </div>
-          </CardContent>
-        </Card>
-        </div>
-      ) : null}
+          </div>
+        ) : null}
+      </div>
     </main>
   );
 }
@@ -307,19 +409,18 @@ export function OptionWorkbench() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="grid gap-2">
-      <div className="text-sm font-medium">{label}</div>
+      <div className="text-xs font-medium text-muted-foreground">{label}</div>
       {children}
     </div>
   );
 }
 
-function Kpi({ title, value, tone }: { title: string; value: string; tone?: "good" | "bad" }) {
+function Kpi({ title, value, tone, sub }: { title: string; value: string; tone?: "good" | "bad"; sub?: string }) {
   return (
-    <div className="rounded-xl border border-border/60 bg-background/70 p-4">
-      <div className="text-xs text-muted-foreground">{title}</div>
-      <div className={`mt-1 text-lg font-semibold ${tone === "good" ? "text-emerald-500" : tone === "bad" ? "text-rose-500" : ""}`}>
-        {value}
-      </div>
+    <div className="option-kpi">
+      <div className="option-kpi-title">{title}</div>
+      <div className={`option-kpi-value ${tone === "good" ? "text-emerald-500" : tone === "bad" ? "text-rose-500" : ""}`}>{value}</div>
+      {sub ? <div className="option-kpi-sub">{sub}</div> : null}
     </div>
   );
 }

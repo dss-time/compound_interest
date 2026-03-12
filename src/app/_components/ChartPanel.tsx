@@ -10,7 +10,7 @@ import {
   YAxis,
 } from "recharts";
 import { useEffect, useMemo, useState, type RefObject } from "react";
-import { Activity, TrendingUp, Wallet } from "lucide-react";
+import { Activity, ChartColumnBig, Sparkles, TrendingUp, Wallet } from "lucide-react";
 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { fmtMoney } from "@/lib/utils";
@@ -53,6 +53,9 @@ export function ChartPanel({
     focusPoint && snapshotFocusPoint ? focusPoint.profit - snapshotFocusPoint.profit : null;
   const gainDelta =
     focusPoint && snapshotFocusPoint ? focusPoint.gain - snapshotFocusPoint.gain : null;
+  const hoverHint = activeMonth !== null
+    ? (lang === "zh" ? "当前高亮月份" : "Current hover month")
+    : (lang === "zh" ? "悬停图表查看任意月份" : "Hover the chart to inspect any month");
 
   const isBalanceVisible = chartMode === "balance_profit" || chartMode === "balance";
   const isProfitVisible = chartMode === "balance_profit" || chartMode === "profit";
@@ -74,8 +77,13 @@ export function ChartPanel({
     <div className="chart-card rounded-xl border border-border/60 bg-background/70 p-4" ref={chartRef}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <div className="text-sm font-semibold">{t("chartTitle")}</div>
-          <div className="text-xs text-muted-foreground">{t("chartSub")}</div>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-border/60 bg-background/70 text-primary">
+              <ChartColumnBig className="h-4 w-4" />
+            </span>
+            <div className="text-sm font-semibold">{t("chartTitle")}</div>
+          </div>
+          <div className="mt-1 text-xs text-muted-foreground">{t("chartSub")}</div>
         </div>
         <Tabs value={chartMode} onValueChange={(value) => onChangeMode(value)}>
           <TabsList className="chart-mode-tabs h-auto gap-1 p-1">
@@ -86,7 +94,13 @@ export function ChartPanel({
           </TabsList>
         </Tabs>
       </div>
-      <div className="mt-2 text-[11px] text-muted-foreground">{focusMonthLabel}</div>
+      <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+        <span>{focusMonthLabel}</span>
+        <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-background/70 px-2.5 py-1">
+          <Sparkles className="h-3.5 w-3.5 text-primary" />
+          {hoverHint}
+        </span>
+      </div>
       <div className={`chart-legend-rail mt-2 ${modeFx ? "is-switching" : ""}`}>
         {isBalanceVisible ? (
           <span className="legend-chip">
@@ -157,7 +171,7 @@ export function ChartPanel({
         </div>
       ) : null}
       {hasData ? (
-        <div className="chart-canvas mt-4 h-64 w-full">
+        <div className="chart-canvas mt-4 h-[250px] w-full md:h-64">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={chartData}
@@ -302,9 +316,15 @@ export function ChartPanel({
         </div>
       ) : (
         <div className="chart-empty mt-4">
+          <div className="chart-empty-icon">
+            <ChartColumnBig className="h-5 w-5" />
+          </div>
           <div className="chart-empty-title">{lang === "zh" ? "暂无可视化数据" : "No chart data yet"}</div>
           <div className="chart-empty-sub">
             {lang === "zh" ? "调整参数后将自动生成收益曲线。" : "Adjust inputs and the performance curve will appear automatically."}
+          </div>
+          <div className="chart-empty-note">
+            {lang === "zh" ? "建议先设置本金、收益率和周期。" : "Start with principal, return input, and horizon."}
           </div>
         </div>
       )}

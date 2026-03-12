@@ -21,7 +21,7 @@ export function PageToggleButton() {
         aria-label={label}
         className={cn(
           "inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/82 px-4 py-2 text-sm",
-          "text-secondary-foreground shadow-[0_12px_30px_rgba(15,23,42,0.10)] backdrop-blur-xl transition hover:-translate-y-0.5 hover:bg-background/92",
+          "text-secondary-foreground shadow-[0_10px_22px_rgba(15,23,42,0.08)] backdrop-blur-xl transition-[transform,background-color,border-color,box-shadow,color] duration-150 ease-out hover:-translate-y-px hover:bg-background/90 hover:shadow-[0_12px_26px_rgba(15,23,42,0.1)]",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         )}
       >

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { CalendarClock, Sparkles, Target, TrendingUp } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import { fmtMoney } from "@/lib/utils";
@@ -72,11 +73,17 @@ export function GoalPlanner({
     <div className="action-shell grid gap-4 p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <div className="text-base font-semibold text-foreground">{title}</div>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-primary/18 bg-primary/10 text-primary">
+              <Target className="h-4 w-4" />
+            </span>
+            <div className="text-base font-semibold text-foreground">{title}</div>
+          </div>
           <div className="mt-1 text-sm leading-relaxed text-muted-foreground">{hint}</div>
         </div>
         {simMode === "tradingDays" ? (
-          <div className="rounded-full border border-amber-500/25 bg-amber-500/10 px-3 py-1 text-[11px] font-medium text-amber-700 dark:text-amber-300">
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/25 bg-amber-500/10 px-3 py-1 text-[11px] font-medium text-amber-700 dark:text-amber-300">
+            <Sparkles className="h-3.5 w-3.5" />
             {approxLabel}
           </div>
         ) : null}
@@ -84,7 +91,7 @@ export function GoalPlanner({
       <div className="rounded-[18px] border border-border/60 bg-background/70 px-3 py-3 text-xs leading-relaxed text-muted-foreground">
         {plannerSummary}
       </div>
-      <div className="grid gap-2 md:grid-cols-[140px_minmax(0,1fr)] md:items-center">
+      <div className="grid gap-2 xl:grid-cols-[140px_minmax(0,1fr)] xl:items-center">
         <div className="text-sm text-muted-foreground">{targetLabel}</div>
         <Input
           type="number"
@@ -96,13 +103,19 @@ export function GoalPlanner({
       </div>
       <div className="grid gap-2 sm:grid-cols-2">
         <div className="rounded-[18px] border border-border/50 bg-background/80 px-3 py-3">
-          <div className="text-xs text-muted-foreground">{rateLabel}</div>
+          <div className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+            <TrendingUp className="h-3.5 w-3.5 text-primary" />
+            {rateLabel}
+          </div>
           <div className="mt-2 text-lg font-semibold text-foreground">
             {neededMonthlyRate !== null && isFinite(neededMonthlyRate) ? `${(neededMonthlyRate * 100).toFixed(3)}%` : na}
           </div>
         </div>
         <div className="rounded-[18px] border border-border/50 bg-background/80 px-3 py-3">
-          <div className="text-xs text-muted-foreground">{monthsLabel}</div>
+          <div className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+            <CalendarClock className="h-3.5 w-3.5 text-primary" />
+            {monthsLabel}
+          </div>
           <div className="mt-2 text-lg font-semibold text-foreground">
             {neededMonths !== null && isFinite(neededMonths) ? neededMonths.toFixed(1) : na}
           </div>

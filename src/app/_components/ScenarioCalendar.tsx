@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { DayFlowCalendar, ViewType, createAllDayEvent, createDragPlugin, createMonthView, useCalendarApp } from "@dayflow/core";
 import { CalendarErrorBoundary } from "@/app/_components/CalendarErrorBoundary";
 import { Button } from "@/components/ui/button";
-import { CalendarDays, ChevronDown, ChevronUp, Clock3, Flag } from "lucide-react";
+import { CalendarDays, ChevronDown, ChevronUp, Clock3, Flag, Sparkles } from "lucide-react";
 
 export type CalendarEventInput = {
   id: string;
@@ -66,6 +66,7 @@ export function ScenarioCalendar({
   const timelineSub =
     lang === "zh" ? "按发生顺序展示开始、结束、回撤与快照节点。" : "Events ordered by when they happen: start, end, drawdown, and snapshot checkpoints.";
   const toggleLabel = calendarCollapsed ? (lang === "zh" ? "展开月历" : "Expand Calendar") : lang === "zh" ? "折叠月历" : "Collapse Calendar";
+  const hoverHint = lang === "zh" ? "悬停今天日期可查看提示" : "Hover today's date to see the label";
   const formatEventDate = (date: Date) =>
     new Intl.DateTimeFormat(locale, {
       year: "numeric",
@@ -78,7 +79,12 @@ export function ScenarioCalendar({
     <div className="calendar-card grid gap-3">
       <div className="flex items-center justify-between gap-2">
         <div className="min-w-0">
-          <div className="text-xs uppercase text-muted-foreground">{title}</div>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-border/60 bg-background/70 text-primary">
+              <CalendarDays className="h-4 w-4" />
+            </span>
+            <div className="text-sm font-semibold text-foreground">{title}</div>
+          </div>
           {subtitle ? <div className="mt-1 text-xs text-muted-foreground">{subtitle}</div> : null}
         </div>
         <Button
@@ -144,8 +150,14 @@ export function ScenarioCalendar({
                 <div className="text-xs font-medium text-foreground">{timelineTitle}</div>
                 <div className="mt-1 text-[11px] leading-relaxed text-muted-foreground">{timelineSub}</div>
               </div>
-              <div className="rounded-full border border-border/60 bg-background/75 px-3 py-1 text-[11px] text-muted-foreground">
-                {events.length} {lang === "zh" ? "个节点" : "events"}
+              <div className="grid gap-2">
+                <div className="rounded-full border border-border/60 bg-background/75 px-3 py-1 text-[11px] text-muted-foreground">
+                  {events.length} {lang === "zh" ? "个节点" : "events"}
+                </div>
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-background/75 px-3 py-1 text-[11px] text-muted-foreground">
+                  <Sparkles className="h-3.5 w-3.5 text-primary" />
+                  {hoverHint}
+                </div>
               </div>
             </div>
             <div className="grid gap-2">
@@ -169,9 +181,15 @@ export function ScenarioCalendar({
         </div>
       ) : (
         <div className="calendar-empty rounded-xl border border-border/60 bg-background/70 p-4 text-xs text-muted-foreground">
+          <div className="calendar-empty-icon">
+            <CalendarDays className="h-5 w-5" />
+          </div>
           <div className="calendar-empty-title">{emptyText}</div>
           <div className="calendar-empty-sub">
             {lang === "zh" ? "生成结果后，这里会展示开始/结束/回撤和快照日期。" : "Once results are generated, start/end/drawdown/snapshot dates will appear here."}
+          </div>
+          <div className="calendar-empty-note">
+            {lang === "zh" ? "交易日模式下还会同步展示关键日期节点。" : "Trading-day mode will also surface key date checkpoints here."}
           </div>
         </div>
       )}

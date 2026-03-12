@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckCircle2, CircleDashed } from "lucide-react";
+import { AlertTriangle, ArrowRight, CheckCircle2, CircleDashed, ShieldCheck, Sparkles } from "lucide-react";
 
 export type ReadinessItem = {
   id: string;
@@ -37,15 +37,22 @@ export function ReadinessPanel({
     <div className="dr-panel grid gap-4 rounded-[24px] p-4">
       <div className="surface-head">
         <div className="min-w-0">
-          <div className="text-base font-semibold text-foreground">{title}</div>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-emerald-500/18 bg-emerald-500/10 text-emerald-500">
+              <ShieldCheck className="h-4 w-4" />
+            </span>
+            <div className="text-base font-semibold text-foreground">{title}</div>
+          </div>
           <div className="mt-1 surface-sub">{subtitle}</div>
         </div>
-        <div className="rounded-full border border-border/60 bg-background/70 px-3 py-1 text-xs font-medium text-foreground shadow-sm">
+        <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-background/70 px-3 py-1 text-xs font-medium text-foreground shadow-sm">
+          <Sparkles className="h-3.5 w-3.5 text-primary" />
           {summary}
         </div>
       </div>
-      <div className="readiness-strip px-4 py-3 text-xs leading-relaxed text-foreground">
-        {primaryAction}
+      <div className="readiness-strip flex items-start gap-2 px-4 py-3 text-xs leading-relaxed text-foreground">
+        <ArrowRight className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-primary" />
+        <span>{primaryAction}</span>
       </div>
       <div className="grid gap-2">
         {items.map((item) => (

@@ -1,3 +1,5 @@
+import { FolderKanban, Save, Trash2 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { convertAmount, fmtMoney } from "@/lib/utils";
 
@@ -6,10 +8,16 @@ export function ScenarioPanel({ scenarios, baseResult, lang, currency, t, onSave
     <div className="action-shell grid gap-3 p-4">
       <div className="flex items-center justify-between">
         <div>
-          <div className="text-base font-semibold text-foreground">{t("scenarioTitle")}</div>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-border/60 bg-background/70 text-primary">
+              <FolderKanban className="h-4 w-4" />
+            </span>
+            <div className="text-base font-semibold text-foreground">{t("scenarioTitle")}</div>
+          </div>
           <div className="mt-1 text-sm text-muted-foreground">{t("scenarioSub")}</div>
         </div>
         <Button size="sm" variant="secondary" onClick={onSave} disabled={!baseResult.ok}>
+          <Save className="h-4 w-4" />
           {t("scenarioSave")}
         </Button>
       </div>
@@ -33,6 +41,7 @@ export function ScenarioPanel({ scenarios, baseResult, lang, currency, t, onSave
                     </div>
                   </div>
                   <Button size="sm" variant="ghost" onClick={() => onRemove(item.id)}>
+                    <Trash2 className="h-4 w-4" />
                     {t("scenarioRemove")}
                   </Button>
                 </div>

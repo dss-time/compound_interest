@@ -1,7 +1,19 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { AlertTriangle } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowRightLeft,
+  BadgePercent,
+  CalendarDays,
+  Calculator,
+  LineChart,
+  PieChart,
+  Sparkles,
+  TrendingUp,
+  Wallet,
+  type LucideIcon,
+} from "lucide-react";
 
 import { CalendarGuide } from "@/app/_components/CalendarGuide";
 import { ChartPanel } from "@/app/_components/ChartPanel";
@@ -93,45 +105,73 @@ export function ResultsCard({
               </div>
             </div>
 
-            <SectionHeading title={resultSectionTitle} />
+            <SectionHeading title={resultSectionTitle} icon={Calculator} />
 
             <div className="finance-result-grid">
               <div className="finance-result-card finance-result-card-green">
-                <div className="finance-result-top">{t("kpiProfit")}</div>
+                <div className="finance-result-head">
+                  <span className="finance-result-icon">
+                    <TrendingUp className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <div className="finance-result-top">{t("kpiProfit")}</div>
+                    <div className="finance-result-note">{t("kpiProfitHint")}</div>
+                  </div>
+                </div>
                 <div className="finance-result-value">{fmtMoney(lang, state.currency, baseResult.base.profit)}</div>
-                <div className="finance-result-note">{t("kpiProfitHint")}</div>
               </div>
               <div className="finance-result-card finance-result-card-orange">
-                <div className="finance-result-top">{state.showAnnualized ? t("kpiAnnualized") : t("kpiTotalReturn")}</div>
+                <div className="finance-result-head">
+                  <span className="finance-result-icon">
+                    <BadgePercent className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <div className="finance-result-top">{state.showAnnualized ? t("kpiAnnualized") : t("kpiTotalReturn")}</div>
+                    <div className="finance-result-note">
+                      {state.showAnnualized ? annualizedHint : t("kpiTotalReturnHint")}
+                    </div>
+                  </div>
+                </div>
                 <div className="finance-result-value">
                   {state.showAnnualized ? fmtPct(baseResult.base.annualized) : fmtPct(baseResult.base.totalReturn)}
                 </div>
-                <div className="finance-result-note">
-                  {state.showAnnualized ? annualizedHint : t("kpiTotalReturnHint")}
-                </div>
               </div>
               <div className="finance-result-card finance-result-card-blue">
-                <div className="finance-result-top">{t("kpiFinal")}</div>
+                <div className="finance-result-head">
+                  <span className="finance-result-icon">
+                    <Wallet className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <div className="finance-result-top">{t("kpiFinal")}</div>
+                    <div className="finance-result-note">{t("kpiFinalHint")}</div>
+                  </div>
+                </div>
                 <div className="finance-result-value">{fmtMoney(lang, state.currency, baseResult.base.balance)}</div>
-                <div className="finance-result-note">{t("kpiFinalHint")}</div>
               </div>
               <div className="finance-side-insight">
-                <div className="finance-side-label">{lang === "zh" ? "辅助换算" : "Secondary View"}</div>
+                <div className="finance-result-head">
+                  <span className="finance-result-icon finance-result-icon-neutral">
+                    <ArrowRightLeft className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <div className="finance-side-label">{lang === "zh" ? "辅助换算" : "Secondary View"}</div>
+                    <div className="finance-side-note">
+                      {lang === "zh"
+                        ? "同步显示另一币种估算值，便于和客户沟通汇率影响。"
+                        : "Shows the alternate currency estimate for client conversations about FX impact."}
+                    </div>
+                  </div>
+                </div>
                 <div className="finance-side-value">
                   {(() => {
                     const converted = convertByCurrency(baseResult.base.balance, state.currency, state.fxRate);
                     return fmtMoney(lang, converted.secondaryCurrency, converted.secondary);
                   })()}
                 </div>
-                <div className="finance-side-note">
-                  {lang === "zh"
-                    ? "同步显示另一币种估算值，便于和客户沟通汇率影响。"
-                    : "Shows the alternate currency estimate for client conversations about FX impact."}
-                </div>
               </div>
             </div>
 
-            <SectionHeading title={trendSectionTitle} />
+            <SectionHeading title={trendSectionTitle} icon={LineChart} />
             <ChartPanel
               chartData={chartData}
               snapshotData={snapshotChartData}
@@ -144,39 +184,50 @@ export function ResultsCard({
             />
 
             <div ref={compareSectionRef}>
-              <SectionHeading title={compareSectionTitle} />
+              <SectionHeading title={compareSectionTitle} icon={PieChart} />
               <InvestmentCompare lang={lang} />
             </div>
 
-            <SectionHeading title={detailSectionTitle} />
+            <SectionHeading title={detailSectionTitle} icon={Sparkles} />
             <div className="results-support-grid">
-              <ExportActions lang={lang} onCsv={onExportCsv} onPng={onExportPng} onPdf={onExportPdf} />
-              <GoalPlanner
-                lang={lang}
-                currency={state.currency}
-                simMode={state.simMode}
-                mode={state.mode}
-                principal={state.principal}
-                months={months}
-                monthlyRatePct={state.monthlyRate}
-              />
-              <SnapshotCompare
-                lang={lang}
-                currency={state.currency}
-                current={currentMetrics}
-                snapshot={snapshotMetrics}
-                snapshots={snapshots}
-                selectedId={selectedSnapshotId}
-                onSelect={onSelectSnapshot}
-                onCapture={onCaptureSnapshot}
-                onClear={onClearSnapshot}
-              />
+              <div className="results-support-card results-support-card-compact">
+                <ExportActions lang={lang} onCsv={onExportCsv} onPng={onExportPng} onPdf={onExportPdf} />
+              </div>
+              <div className="results-support-card">
+                <GoalPlanner
+                  lang={lang}
+                  currency={state.currency}
+                  simMode={state.simMode}
+                  mode={state.mode}
+                  principal={state.principal}
+                  months={months}
+                  monthlyRatePct={state.monthlyRate}
+                />
+              </div>
+              <div className="results-support-card results-support-card-wide">
+                <SnapshotCompare
+                  lang={lang}
+                  currency={state.currency}
+                  current={currentMetrics}
+                  snapshot={snapshotMetrics}
+                  snapshots={snapshots}
+                  selectedId={selectedSnapshotId}
+                  onSelect={onSelectSnapshot}
+                  onCapture={onCaptureSnapshot}
+                  onClear={onClearSnapshot}
+                />
+              </div>
             </div>
 
             <StrategyBrief lang={lang} title={strategyBriefTitle} subtitle={strategyBriefSubtitle} items={strategyBriefItems} />
 
             <div className="dr-panel rounded-[24px] p-4">
-              <div className="text-base font-semibold text-foreground">{t("insightTitle")}</div>
+              <div className="flex items-center gap-2">
+                <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-border/60 bg-background/70 text-primary">
+                  <CalendarDays className="h-4 w-4" />
+                </span>
+                <div className="text-base font-semibold text-foreground">{t("insightTitle")}</div>
+              </div>
               <Tabs defaultValue="calendar" className="mt-3">
                 <TabsList className="flex flex-wrap">
                   <TabsTrigger value="calendar">{t("insightCalendarTab")}</TabsTrigger>
@@ -289,9 +340,14 @@ export function ResultsCard({
   );
 }
 
-function SectionHeading({ title }: { title: string }) {
+function SectionHeading({ title, icon: Icon }: { title: string; icon?: LucideIcon }) {
   return (
     <div className="finance-section-head">
+      {Icon ? (
+        <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-border/60 bg-background/70 text-primary">
+          <Icon className="h-4 w-4" />
+        </span>
+      ) : null}
       <div className="finance-section-title">{title}</div>
       <div className="finance-section-line" />
     </div>

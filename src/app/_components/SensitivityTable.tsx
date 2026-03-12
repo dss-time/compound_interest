@@ -1,5 +1,7 @@
 "use client";
 
+import { SlidersHorizontal } from "lucide-react";
+
 import { fmtMoney } from "@/lib/utils";
 
 export type SensitivityRow = {
@@ -21,7 +23,12 @@ export function SensitivityTable({
   return (
     <div className="grid gap-3 rounded-xl border border-border/60 bg-background/70 p-4">
       <div>
-        <div className="text-base font-semibold text-foreground">{lang === "zh" ? "敏感性分析" : "Sensitivity Analysis"}</div>
+        <div className="flex items-center gap-2">
+          <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl border border-border/60 bg-background/70 text-primary">
+            <SlidersHorizontal className="h-4 w-4" />
+          </span>
+          <div className="text-base font-semibold text-foreground">{lang === "zh" ? "敏感性分析" : "Sensitivity Analysis"}</div>
+        </div>
         <div className="mt-1 text-sm text-muted-foreground">
           {lang === "zh" ? "查看收益率变化对结果的影响区间。" : "Inspect how return shifts change the outcome range."}
         </div>

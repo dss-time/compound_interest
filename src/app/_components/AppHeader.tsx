@@ -1,4 +1,4 @@
-import { Calculator, Languages, LineChart, Moon, PieChart, Sun } from "lucide-react";
+import { ArrowUpRight, Calculator, Languages, LineChart, Moon, PieChart, Sun } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import SpotlightCard from "@/app/_components/reactbits/SpotlightCard";
@@ -29,22 +29,22 @@ export function AppHeader({
   const brand = lang === "zh" ? "复利收益规划器" : "Compound Interest Planner";
   const liveLabel = lang === "zh" ? "简单清晰的收益测算" : "Clean, calm return planning";
   const heroTitle = lang === "zh" ? "投资收益计算器" : "Investment Return Calculator";
-  const heroDescriptor = lang === "zh" ? "月度估算 / 交易日精确 / 场景对比" : "Monthly estimates / Trading-day precision / Scenario compare";
+  const heroDescriptor = lang === "zh" ? "月度估算、交易日精确与场景对比" : "Monthly estimates, trading-day precision, and scenario compare";
   const helperText =
     lang === "zh"
-      ? "输入参数后结果会实时更新。高级功能仍然保留，但默认收在后面的分析区。"
-      : "Results update live as you edit. Advanced tools stay available, but remain tucked into the analysis area by default.";
+      ? "输入后结果会即时更新，复杂功能保留在后续分析区，不打断第一次使用。"
+      : "Results update immediately. Advanced tools stay available, but remain tucked into later analysis panels.";
   const shortcuts =
     lang === "zh"
       ? [
-          { id: "calc", label: "参数计算", sub: "查看输入区", icon: Calculator, onClick: onJumpCalc },
-          { id: "trend", label: "收益趋势", sub: "查看图表", icon: LineChart, onClick: onJumpTrend },
-          { id: "compare", label: "投资对比", sub: "查看参考卡片", icon: PieChart, onClick: onJumpCompare },
+          { id: "calc", label: "输入参数", sub: "打开参数区", icon: Calculator, onClick: onJumpCalc },
+          { id: "trend", label: "收益趋势", sub: "跳转到图表区", icon: LineChart, onClick: onJumpTrend },
+          { id: "compare", label: "参考对比", sub: "查看投资参考卡片", icon: PieChart, onClick: onJumpCompare },
         ]
       : [
-          { id: "calc", label: "Calculator", sub: "Open inputs", icon: Calculator, onClick: onJumpCalc },
-          { id: "trend", label: "Trend", sub: "Open chart", icon: LineChart, onClick: onJumpTrend },
-          { id: "compare", label: "Compare", sub: "Open reference cards", icon: PieChart, onClick: onJumpCompare },
+          { id: "calc", label: "Inputs", sub: "Open the input area", icon: Calculator, onClick: onJumpCalc },
+          { id: "trend", label: "Trend", sub: "Jump to the chart", icon: LineChart, onClick: onJumpTrend },
+          { id: "compare", label: "Compare", sub: "Open the reference cards", icon: PieChart, onClick: onJumpCompare },
         ];
 
   return (
@@ -84,15 +84,15 @@ export function AppHeader({
                 key={shortcut.id}
                 type="button"
                 onClick={shortcut.onClick}
+                title={shortcut.sub}
+                aria-label={`${shortcut.label} · ${shortcut.sub}`}
                 className="finance-shortcut"
               >
                 <span className="finance-shortcut-icon">
                   <Icon className="h-4 w-4" />
                 </span>
-                <span className="finance-shortcut-copy">
-                  <span className="finance-shortcut-title">{shortcut.label}</span>
-                  <span className="finance-shortcut-sub">{shortcut.sub}</span>
-                </span>
+                <span className="finance-shortcut-title">{shortcut.label}</span>
+                <ArrowUpRight className="finance-shortcut-arrow h-3.5 w-3.5" />
               </button>
             );
           })}
