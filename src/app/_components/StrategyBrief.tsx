@@ -41,7 +41,7 @@ export function StrategyBrief({
         {items.map((item) => {
           const Icon = BRIEF_ICONS[item.id] || Sparkles;
           return (
-            <div key={item.id} className="brief-item p-3">
+            <div key={item.id} className="liquid-card brief-item p-3">
               <div className="flex items-center gap-2">
                 <span className="inline-flex h-8 w-8 items-center justify-center rounded-2xl border border-border/60 bg-background/70 text-primary">
                   <Icon className="h-4 w-4" />

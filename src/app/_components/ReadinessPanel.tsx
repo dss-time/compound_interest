@@ -58,7 +58,7 @@ export function ReadinessPanel({
         {items.map((item) => (
           <div
             key={item.id}
-            className="readiness-item grid gap-2 px-3 py-3 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center"
+            className="liquid-card readiness-item grid gap-2 px-3 py-3 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center"
           >
             <div className="pt-0.5 sm:pt-0">{iconForStatus(item.status)}</div>
             <div className="min-w-0">

@@ -86,7 +86,7 @@ export function AppHeader({
                 onClick={shortcut.onClick}
                 title={shortcut.sub}
                 aria-label={`${shortcut.label} · ${shortcut.sub}`}
-                className="finance-shortcut"
+                className="finance-shortcut liquid-button"
               >
                 <span className="finance-shortcut-icon">
                   <Icon className="h-4 w-4" />

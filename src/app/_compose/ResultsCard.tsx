@@ -108,7 +108,7 @@ export function ResultsCard({
             <SectionHeading title={resultSectionTitle} icon={Calculator} />
 
             <div className="finance-result-grid">
-              <div className="finance-result-card finance-result-card-green">
+              <div className="liquid-card finance-result-card finance-result-card-green">
                 <div className="finance-result-head">
                   <span className="finance-result-icon">
                     <TrendingUp className="h-4 w-4" />
@@ -120,7 +120,7 @@ export function ResultsCard({
                 </div>
                 <div className="finance-result-value">{fmtMoney(lang, state.currency, baseResult.base.profit)}</div>
               </div>
-              <div className="finance-result-card finance-result-card-orange">
+              <div className="liquid-card finance-result-card finance-result-card-orange">
                 <div className="finance-result-head">
                   <span className="finance-result-icon">
                     <BadgePercent className="h-4 w-4" />
@@ -136,7 +136,7 @@ export function ResultsCard({
                   {state.showAnnualized ? fmtPct(baseResult.base.annualized) : fmtPct(baseResult.base.totalReturn)}
                 </div>
               </div>
-              <div className="finance-result-card finance-result-card-blue">
+              <div className="liquid-card finance-result-card finance-result-card-blue">
                 <div className="finance-result-head">
                   <span className="finance-result-icon">
                     <Wallet className="h-4 w-4" />
@@ -148,7 +148,7 @@ export function ResultsCard({
                 </div>
                 <div className="finance-result-value">{fmtMoney(lang, state.currency, baseResult.base.balance)}</div>
               </div>
-              <div className="finance-side-insight">
+              <div className="liquid-card finance-side-insight">
                 <div className="finance-result-head">
                   <span className="finance-result-icon finance-result-icon-neutral">
                     <ArrowRightLeft className="h-4 w-4" />

@@ -69,7 +69,7 @@ export function InvestmentCompare({
       {CARDS.map((card) => {
         const Icon = card.icon;
         return (
-          <div key={card.id} className={`compare-card compare-card-${card.tone}`}>
+          <div key={card.id} className={`liquid-card compare-card compare-card-${card.tone}`}>
             <div className="compare-card-media">
               <Icon className="h-10 w-10" />
             </div>

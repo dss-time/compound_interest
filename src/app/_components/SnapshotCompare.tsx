@@ -101,11 +101,12 @@ export function SnapshotCompare({
             return (
               <button
                 key={item.id}
-                className={`inline-flex items-center justify-center rounded-full border px-3 py-1.5 transition-[transform,background-color,border-color,color,box-shadow] duration-150 ease-out ${
+                className={`liquid-button inline-flex items-center justify-center rounded-full border px-3 py-1.5 transition-[transform,background-color,border-color,color,box-shadow] duration-150 ease-out ${
                   active
                     ? "border-primary/30 bg-primary/12 text-foreground shadow-[0_8px_18px_hsl(var(--primary)/0.12)]"
                     : "border-border/60 bg-background/80 text-muted-foreground hover:-translate-y-px hover:text-foreground hover:shadow-[0_8px_18px_rgba(15,23,42,0.06)]"
                 }`}
+                data-liquid-active={active ? "true" : undefined}
                 onClick={() => onSelect(item.id)}
               >
                 {new Date(item.createdAt).toLocaleDateString(lang === "zh" ? "zh-CN" : "en-US")} ·{" "}

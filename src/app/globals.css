@@ -27,6 +27,11 @@
     --input: 214 32% 91%;
     --ring: 24 94% 48%;
     --radius: 0.9rem;
+    --liquid-primary: rgba(0, 196, 255, 0.32);
+    --liquid-secondary: rgba(168, 239, 133, 0.24);
+    --liquid-decor-primary: rgba(0, 196, 255, 0.12);
+    --liquid-decor-secondary: rgba(168, 239, 133, 0.1);
+    --liquid-click: rgba(20, 88, 132, 0.22);
   }
 
   .dark {
@@ -49,6 +54,11 @@
     --border: 222 32% 17%;
     --input: 222 32% 17%;
     --ring: 24 94% 58%;
+    --liquid-primary: rgba(0, 234, 255, 0.4);
+    --liquid-secondary: rgba(168, 239, 133, 0.3);
+    --liquid-decor-primary: rgba(0, 234, 255, 0.14);
+    --liquid-decor-secondary: rgba(168, 239, 133, 0.12);
+    --liquid-click: rgba(255, 255, 255, 0.58);
   }
 
   * {
@@ -242,10 +252,10 @@
 
 .finance-hero-simple {
   background:
-    radial-gradient(circle at 50% -12%, rgba(152, 194, 255, 0.18), transparent 28%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 22%),
-    linear-gradient(160deg, rgba(26, 54, 104, 0.94) 0%, rgba(23, 44, 84, 0.94) 52%, rgba(18, 35, 69, 0.96) 100%);
-  border-color: rgba(129, 167, 230, 0.18);
+    radial-gradient(circle at 50% -12%, rgba(109, 164, 255, 0.18), transparent 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.16) 24%, transparent 42%),
+    linear-gradient(160deg, rgba(250, 252, 255, 0.94) 0%, rgba(238, 246, 255, 0.96) 54%, rgba(230, 240, 252, 0.98) 100%);
+  border-color: rgba(129, 167, 230, 0.28);
 }
 
 .finance-hero-top {
@@ -264,13 +274,13 @@
 .finance-brand-name {
   font-size: 13px;
   font-weight: 600;
-  color: rgba(236, 243, 255, 0.92);
+  color: rgba(47, 63, 92, 0.92);
 }
 
 .finance-hero-live {
   font-size: 12px;
   font-weight: 500;
-  color: rgba(232, 242, 255, 0.7);
+  color: rgba(74, 92, 126, 0.72);
 }
 
 .finance-hero-main-simple {
@@ -285,12 +295,12 @@
   display: inline-flex;
   align-items: center;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(117, 148, 204, 0.22);
+  background: rgba(255, 255, 255, 0.5);
   padding: 7px 12px;
   font-size: 12px;
   font-weight: 500;
-  color: rgba(245, 249, 255, 0.92);
+  color: rgba(58, 76, 111, 0.9);
 }
 
 .finance-hero-title-simple {
@@ -300,7 +310,7 @@
   font-weight: 700;
   line-height: 1.02;
   letter-spacing: -0.03em;
-  color: white;
+  color: rgba(34, 47, 75, 0.96);
   text-wrap: balance;
 }
 
@@ -308,7 +318,7 @@
   max-width: 46ch;
   font-size: 13px;
   line-height: 1.72;
-  color: rgba(232, 242, 255, 0.7);
+  color: rgba(68, 86, 118, 0.78);
 }
 
 .finance-shortcut-row {
@@ -326,20 +336,20 @@
   gap: 10px;
   min-height: 48px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(121, 150, 206, 0.18);
+  background: rgba(255, 255, 255, 0.48);
   padding: 0 16px;
   text-align: center;
-  color: white;
-  box-shadow: 0 10px 26px rgba(7, 16, 34, 0.08);
+  color: rgba(41, 57, 88, 0.94);
+  box-shadow: 0 10px 24px rgba(71, 97, 140, 0.08);
   transition: transform 150ms ease, background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
 }
 
 .finance-shortcut:hover {
   transform: translateY(-1px);
-  border-color: rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.09);
-  box-shadow: 0 12px 28px rgba(7, 16, 34, 0.12);
+  border-color: rgba(99, 135, 204, 0.24);
+  background: rgba(255, 255, 255, 0.62);
+  box-shadow: 0 12px 28px rgba(71, 97, 140, 0.12);
 }
 
 .finance-shortcut-icon {
@@ -350,18 +360,19 @@
   height: 28px;
   flex-shrink: 0;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(121, 150, 206, 0.18);
+  background: rgba(255, 255, 255, 0.56);
+  color: rgba(54, 85, 146, 0.92);
 }
 
 .finance-shortcut-title {
   font-size: 13px;
   font-weight: 600;
-  color: white;
+  color: rgba(39, 55, 86, 0.94);
 }
 
 .finance-shortcut-arrow {
-  color: rgba(232, 242, 255, 0.72);
+  color: rgba(88, 109, 145, 0.72);
 }
 
 .finance-section-head {
@@ -1689,6 +1700,63 @@
   box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28);
 }
 
+.dark .finance-hero-simple {
+  background:
+    radial-gradient(circle at 50% -12%, rgba(152, 194, 255, 0.18), transparent 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 22%),
+    linear-gradient(160deg, rgba(26, 54, 104, 0.94) 0%, rgba(23, 44, 84, 0.94) 52%, rgba(18, 35, 69, 0.96) 100%);
+  border-color: rgba(129, 167, 230, 0.18);
+}
+
+.dark .finance-brand-name {
+  color: rgba(236, 243, 255, 0.92);
+}
+
+.dark .finance-hero-live {
+  color: rgba(232, 242, 255, 0.7);
+}
+
+.dark .finance-hero-badge-simple {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(245, 249, 255, 0.92);
+}
+
+.dark .finance-hero-title-simple {
+  color: white;
+}
+
+.dark .finance-hero-sub-simple {
+  color: rgba(232, 242, 255, 0.7);
+}
+
+.dark .finance-shortcut {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: white;
+  box-shadow: 0 10px 26px rgba(7, 16, 34, 0.08);
+}
+
+.dark .finance-shortcut:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.09);
+  box-shadow: 0 12px 28px rgba(7, 16, 34, 0.12);
+}
+
+.dark .finance-shortcut-icon {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.09);
+  color: white;
+}
+
+.dark .finance-shortcut-title {
+  color: white;
+}
+
+.dark .finance-shortcut-arrow {
+  color: rgba(232, 242, 255, 0.72);
+}
+
 .dark .surface-shell,
 .dark .step-shell,
 .dark .app-hot-toast {
@@ -2063,6 +2131,381 @@ html[lang="en"] .scenario-calendar-shell .df-month-date-number.bg-primary:hover:
   }
 }
 
+/* ==================== Liquid Droplet Effects ==================== */
+
+.liquid-canvas {
+  position: relative;
+  isolation: isolate;
+}
+
+.liquid-canvas::before,
+.liquid-canvas::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.68;
+  filter: blur(7px);
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform, border-radius, opacity;
+}
+
+.liquid-canvas::before {
+  top: 14%;
+  right: 6%;
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(
+    ellipse at 30% 30%,
+    var(--liquid-decor-primary) 0%,
+    rgba(0, 196, 255, 0.08) 50%,
+    transparent 80%
+  );
+  animation: liquid-float-1 15s ease-in-out infinite;
+}
+
+.liquid-canvas::after {
+  left: 5%;
+  bottom: 10%;
+  width: 80px;
+  height: 80px;
+  background: radial-gradient(
+    ellipse at 40% 40%,
+    var(--liquid-decor-secondary) 0%,
+    rgba(168, 239, 133, 0.06) 50%,
+    transparent 80%
+  );
+  animation: liquid-float-2 18s ease-in-out infinite;
+}
+
+.liquid-canvas > * {
+  position: relative;
+  z-index: 1;
+}
+
+.liquid-card,
+.liquid-button,
+[data-liquid-button="true"] {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  contain: layout style paint;
+}
+
+.liquid-card {
+  border-radius: 20px 20px 25px 25px / 20px 20px 30px 30px;
+  transition:
+    transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    border-radius 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    box-shadow 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.liquid-card::before,
+.liquid-card::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 42%;
+  aspect-ratio: 1;
+  border-radius: 999px;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 0;
+  transform: translate(-50%, -50%) scale(0.8) translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+}
+
+.liquid-card::before {
+  background: radial-gradient(circle, var(--liquid-primary) 0%, transparent 70%);
+}
+
+.liquid-card::after {
+  background: radial-gradient(circle, var(--liquid-secondary) 0%, transparent 70%);
+}
+
+.liquid-card:hover {
+  animation: droplet-morph 1.5s ease-in-out infinite;
+}
+
+.liquid-card:hover::before {
+  animation: liquid-card-ripple-fast 1.2s ease-out both;
+}
+
+.liquid-card:hover::after {
+  animation: liquid-card-ripple-slow 1.5s ease-out 0.2s both;
+}
+
+.liquid-card[data-liquid-active="true"] {
+  animation: droplet-morph 1.5s ease-in-out infinite;
+}
+
+.liquid-card[data-liquid-active="true"]::before {
+  animation: liquid-card-pulse-fast 3s ease-in-out infinite;
+}
+
+.liquid-card[data-liquid-active="true"]::after {
+  animation: liquid-card-pulse-slow 3s ease-in-out 0.35s infinite;
+}
+
+.liquid-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.liquid-button,
+[data-liquid-button="true"] {
+  --liquid-button-radius: 15px 15px 18px 18px / 15px 15px 20px 20px;
+  border-radius: var(--liquid-button-radius);
+  transition:
+    transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    border-radius 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    box-shadow 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.finance-shortcut.liquid-button,
+.option-strategy-card.liquid-button,
+.quickstart-tile.liquid-button {
+  --liquid-button-radius: 20px 20px 25px 25px / 20px 20px 30px 30px;
+}
+
+.liquid-button::before,
+.liquid-button::after,
+[data-liquid-button="true"]::before,
+[data-liquid-button="true"]::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 0;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+}
+
+.liquid-button::before,
+[data-liquid-button="true"]::before {
+  top: var(--ripple-y, 50%);
+  left: var(--ripple-x, 50%);
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: radial-gradient(circle, var(--liquid-click) 0%, transparent 70%);
+  transform: translate(-50%, -50%) scale(0.2) translateZ(0);
+}
+
+.liquid-button::after,
+[data-liquid-button="true"]::after {
+  top: 50%;
+  left: 50%;
+  width: 130%;
+  height: 130%;
+  background:
+    radial-gradient(circle, var(--liquid-primary) 0%, transparent 60%),
+    radial-gradient(circle at 65% 40%, var(--liquid-secondary) 0%, transparent 58%);
+  transform: translate(-50%, -50%) scale(0.86) translateZ(0);
+}
+
+.liquid-button:hover,
+[data-liquid-button="true"]:hover {
+  animation: droplet-morph 1.5s ease-in-out infinite;
+}
+
+.liquid-button:hover::after,
+[data-liquid-button="true"]:hover::after {
+  animation: liquid-button-glow 2s ease-in-out infinite;
+}
+
+.liquid-button.ripple-active::before,
+[data-liquid-button="true"].ripple-active::before {
+  animation: liquid-button-ripple 0.5s ease-out both;
+}
+
+.liquid-button[data-liquid-active="true"]::after,
+[data-liquid-button="true"][data-liquid-active="true"]::after {
+  animation:
+    liquid-button-glow 2s ease-in-out infinite,
+    liquid-button-pulse 3s ease-in-out infinite;
+}
+
+.liquid-button svg,
+[data-liquid-button="true"] svg {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes liquid-card-ripple-fast {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8) translateZ(0);
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(3) translateZ(0);
+  }
+}
+
+@keyframes liquid-card-ripple-slow {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.8) translateZ(0);
+  }
+  40% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(2.5) translateZ(0);
+  }
+}
+
+@keyframes liquid-card-pulse-fast {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.9) translateZ(0);
+  }
+  30% {
+    opacity: 0.95;
+  }
+  60% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(2.4) translateZ(0);
+  }
+}
+
+@keyframes liquid-card-pulse-slow {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.88) translateZ(0);
+  }
+  32% {
+    opacity: 0.85;
+  }
+  68% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(2.1) translateZ(0);
+  }
+}
+
+@keyframes liquid-button-ripple {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.2) translateZ(0);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(7.5) translateZ(0);
+  }
+}
+
+@keyframes liquid-button-glow {
+  0%,
+  100% {
+    opacity: 0.18;
+    transform: translate(-50%, -50%) scale(0.88) translateZ(0);
+  }
+  50% {
+    opacity: 0.34;
+    transform: translate(-50%, -50%) scale(1.04) translateZ(0);
+  }
+}
+
+@keyframes liquid-button-pulse {
+  0%,
+  100% {
+    opacity: 0.22;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+@keyframes liquid-float-1 {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+    border-radius: 45% 55% 50% 50% / 55% 45% 55% 45%;
+  }
+  25% {
+    transform: translate(15px, -20px) rotate(5deg);
+    border-radius: 50% 50% 45% 55% / 50% 50% 50% 50%;
+  }
+  50% {
+    transform: translate(0, -35px) rotate(0deg);
+    border-radius: 55% 45% 50% 50% / 45% 55% 45% 55%;
+  }
+  75% {
+    transform: translate(-15px, -20px) rotate(-5deg);
+    border-radius: 50% 50% 55% 45% / 55% 45% 50% 50%;
+  }
+}
+
+@keyframes liquid-float-2 {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+    border-radius: 48% 52% 52% 48% / 55% 45% 55% 45%;
+  }
+  25% {
+    transform: translate(-12px, -14px) rotate(-5deg);
+    border-radius: 55% 45% 48% 52% / 48% 52% 50% 50%;
+  }
+  50% {
+    transform: translate(3px, -24px) rotate(2deg);
+    border-radius: 50% 50% 44% 56% / 45% 55% 44% 56%;
+  }
+  75% {
+    transform: translate(12px, -10px) rotate(6deg);
+    border-radius: 46% 54% 54% 46% / 58% 42% 52% 48%;
+  }
+}
+
+@keyframes droplet-morph {
+  0%,
+  100% {
+    border-radius: 22px 22px 26px 26px / 22px 22px 30px 30px;
+  }
+  25% {
+    border-radius: 24px 20px 28px 24px / 24px 20px 32px 28px;
+  }
+  50% {
+    border-radius: 20px 24px 24px 28px / 20px 24px 28px 32px;
+  }
+  75% {
+    border-radius: 24px 22px 26px 26px / 24px 22px 30px 30px;
+  }
+}
+
+@media (hover: none) {
+  .liquid-card:hover::before,
+  .liquid-card:hover::after,
+  .liquid-button:hover::after,
+  [data-liquid-button="true"]:hover::after {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+
+  .liquid-card:hover,
+  .liquid-button:hover,
+  [data-liquid-button="true"]:hover {
+    animation: none !important;
+  }
+
+  .liquid-canvas::after {
+    display: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .float-in,
   .float-in-delay,
@@ -2072,7 +2515,12 @@ html[lang="en"] .scenario-calendar-shell .df-month-date-number.bg-primary:hover:
   .calendar-surface,
   .calendar-timeline,
   .page-flip-card,
-  .app-hot-toast {
+  .app-hot-toast,
+  .liquid-card,
+  .liquid-button,
+  [data-liquid-button="true"],
+  .liquid-canvas::before,
+  .liquid-canvas::after {
     animation: none !important;
   }
 
@@ -2081,7 +2529,21 @@ html[lang="en"] .scenario-calendar-shell .df-month-date-number.bg-primary:hover:
   .app-hot-toast-action,
   .page-flip-shell,
   .page-flip-card,
-  .chart-legend-rail.is-switching .legend-chip {
+  .chart-legend-rail.is-switching .legend-chip,
+  .liquid-card,
+  .liquid-button,
+  [data-liquid-button="true"] {
     transition: none !important;
+  }
+
+  .liquid-card::before,
+  .liquid-card::after,
+  .liquid-button::before,
+  .liquid-button::after,
+  [data-liquid-button="true"]::before,
+  [data-liquid-button="true"]::after {
+    animation: none !important;
+    transition: none !important;
+    opacity: 0 !important;
   }
 }

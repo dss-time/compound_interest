@@ -35,7 +35,12 @@ export function StrategyCard({
   const riskHints = getStrategyRiskHints(strategy, lang);
 
   return (
-    <button type="button" onClick={onSelect} className={`option-strategy-card ${active ? "is-active" : ""}`}>
+    <button
+      type="button"
+      onClick={onSelect}
+      className={`option-strategy-card liquid-button ${active ? "is-active" : ""}`}
+      data-liquid-active={active ? "true" : undefined}
+    >
       <div className="option-strategy-head">
         <div className="min-w-0">
           <div className="option-strategy-title">{strategy.name}</div>

@@ -230,22 +230,22 @@ export function OptionWorkbench() {
               <h1 className="option-hero-title">{heroTitle}</h1>
               <p className="option-hero-sub">{heroSub}</p>
               <div className="option-hero-stat-grid">
-                <div className="hero-stat">
+                <div className="liquid-card hero-stat">
                   <div className="hero-stat-label">{lang === "zh" ? "当前策略" : "Active Strategy"}</div>
                   <div className="hero-stat-value">{active?.strategy.name || "-"}</div>
                 </div>
-                <div className="hero-stat">
+                <div className="liquid-card hero-stat">
                   <div className="hero-stat-label">{t("optExpiryPrice")}</div>
                   <div className="hero-stat-value">{fmtUSD(expiryPrice)}</div>
                 </div>
-                <div className="hero-stat">
+                <div className="liquid-card hero-stat">
                   <div className="hero-stat-label">{t("optCenterPrice")}</div>
                   <div className="hero-stat-value">{fmtUSD(centerPrice)}</div>
                 </div>
               </div>
             </div>
 
-            <div className="option-control-card">
+            <div className="liquid-card option-control-card">
               <div className="option-control-head">
                 <SlidersHorizontal className="h-4 w-4" />
                 <span>{lang === "zh" ? "核心假设" : "Core Assumptions"}</span>
@@ -272,7 +272,7 @@ export function OptionWorkbench() {
           </div>
         </SpotlightCard>
 
-        <section className="option-section-shell">
+        <section className="liquid-card option-section-shell">
           <div className="option-section-head">
             <div>
               <div className="text-lg font-semibold text-foreground">{libraryTitle}</div>

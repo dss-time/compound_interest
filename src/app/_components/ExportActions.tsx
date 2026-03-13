@@ -56,8 +56,9 @@ export function ExportActions({
                   key={value}
                   type="button"
                   onClick={() => setFmt(value)}
-                  className={`format-switch ${fmt === value ? "is-active" : ""}`}
+                  className={`format-switch liquid-button ${fmt === value ? "is-active" : ""}`}
                   aria-pressed={fmt === value}
+                  data-liquid-active={fmt === value ? "true" : undefined}
                 >
                   <span className="format-switch-label">
                     {FORMAT_META[value].label}

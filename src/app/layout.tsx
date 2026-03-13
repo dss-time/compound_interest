@@ -3,6 +3,7 @@ import Script from "next/script";
 import { AnalyticsConsent } from "@/app/_components/AnalyticsConsent";
 import { AppToaster } from "@/app/_components/AppToaster";
 import { DocumentMetaSync } from "@/app/_components/DocumentMetaSync";
+import { LiquidEffects } from "@/app/_components/LiquidEffects";
 import { PageToggleButton } from "@/app/_components/PageToggleButton";
 import { PageFlipTransition } from "@/app/_components/PageFlipTransition";
 import { DOCUMENT_META_KEY } from "@/lib/document-meta";
@@ -42,6 +43,7 @@ export default function RootLayout({ children }) {
       </head>
       <body>
         <DocumentMetaSync />
+        <LiquidEffects />
         <PageToggleButton />
         <PageFlipTransition>{children}</PageFlipTransition>
         <AppToaster />
